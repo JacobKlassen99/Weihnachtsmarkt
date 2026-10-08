@@ -165,28 +165,41 @@ export const AdminView: React.FC<Props> = ({
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!usernameInput.trim() || !passwordInput.trim()) return;
+    if (!usernameInput.trim() || !passwordInput) return;
 
     setLoggingIn(true);
     setLoginError(null);
 
     try {
-      const res = await backendService.login(usernameInput.trim(), passwordInput.trim());
-      if (!res.ok || !res.token) {
-        throw new Error(res.error || 'Credenciales incorrectas');
+      // Do NOT modify or trim password. Send exact password entered.
+      const res = await backendService.login(usernameInput.trim(), passwordInput);
+
+      if (!res.ok) {
+        throw new Error(res.error || (lang === 'de' ? 'Anmeldung fehlgeschlagen' : 'Inicio de sesión rechazado por el servidor'));
       }
 
-      const user: Usuario = res.usuario || {
-        usuario: usernameInput.trim(),
-        nombre: usernameInput.trim(),
-        rol: 'admin',
+      // Read data.token and data.rol from backend response {ok:true, data:{token, usuario, rol, nombre}}
+      const token = res.data?.token || res.token;
+      if (!token) {
+        throw new Error(res.error || (lang === 'de' ? 'Kein Sitzungstoken erhalten' : 'La respuesta del servidor no incluyó el token de sesión'));
+      }
+
+      const rol = res.data?.rol || (typeof res.usuario === 'object' ? res.usuario.rol : res.rol) || 'admin';
+      const usuarioNombre = res.data?.usuario || (typeof res.usuario === 'object' ? res.usuario.usuario : res.usuario) || usernameInput.trim();
+      const nombreCompleto = res.data?.nombre || (typeof res.usuario === 'object' ? res.usuario.nombre : res.nombre) || usuarioNombre;
+
+      const user: Usuario = {
+        usuario: usuarioNombre,
+        nombre: nombreCompleto,
+        rol: rol,
         estado: 'activo',
       };
 
-      onLoginSuccess(res.token, user);
-      loadAdminData(res.token);
+      onLoginSuccess(token, user);
+      loadAdminData(token);
     } catch (err: any) {
-      setLoginError(err.message || 'Error al iniciar sesión');
+      // Display the REAL error message without revealing passwords or tokens
+      setLoginError(err.message || (lang === 'de' ? 'Verbindungsfehler zum Server' : 'Error de conexión con el servidor'));
     } finally {
       setLoggingIn(false);
     }

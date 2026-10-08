@@ -136,3 +136,18 @@ export interface InvitacionInfo {
   qr_acceso?: string;
   error?: string;
 }
+
+export interface LoginResponse {
+  ok: boolean;
+  data?: {
+    token: string;
+    usuario: string;
+    rol: string;
+    nombre: string;
+  };
+  error?: string;
+  token?: string;
+  usuario?: Usuario | string;
+  rol?: string;
+  nombre?: string;
+}

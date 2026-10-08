@@ -2,6 +2,7 @@ import {
   AdminData,
   Configuracion,
   InvitacionInfo,
+  LoginResponse,
   MiAlquilerData,
   PublicData,
   ScanResult,
@@ -64,10 +65,11 @@ class BackendService {
           'Content-Type': 'text/plain;charset=utf-8',
         },
         body: JSON.stringify(payload),
+        redirect: 'follow',
       });
 
       if (!response.ok) {
-        throw new Error(`Error en el servidor (${response.status})`);
+        throw new Error(`Error en el servidor (${response.status}: ${response.statusText || 'Sin respuesta'})`);
       }
 
       const text = await response.text();
@@ -75,7 +77,12 @@ class BackendService {
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error('Respuesta inválida del servidor');
+        if (text.includes('<title>') || text.includes('<!DOCTYPE') || text.includes('<html')) {
+          const match = text.match(/<title>(.*?)<\/title>/i);
+          const pageTitle = match ? match[1].trim() : 'Página HTML';
+          throw new Error(`El servidor respondió con HTML en lugar de JSON (${pageTitle}).`);
+        }
+        throw new Error(`Respuesta no válida del servidor: ${text.slice(0, 100)}`);
       }
 
       return data as T;
@@ -230,17 +237,25 @@ class BackendService {
   public async login(
     usuario: string,
     password: string
-  ): Promise<{ ok: boolean; token?: string; usuario?: Usuario; error?: string }> {
-    const res = await this.postRequest<{
-      ok: boolean;
-      token?: string;
-      usuario?: Usuario;
-      error?: string;
-    }>({
+  ): Promise<LoginResponse> {
+    const res = await this.postRequest<LoginResponse>({
       action: 'login',
       usuario,
       password,
     });
+
+    // Normalize so data.token, data.rol and flat token/rol are both available
+    if (res.data) {
+      if (!res.token && res.data.token) {
+        res.token = res.data.token;
+      }
+      if (!res.rol && res.data.rol) {
+        res.rol = res.data.rol;
+      }
+      if (!res.nombre && res.data.nombre) {
+        res.nombre = res.data.nombre;
+      }
+    }
 
     return res;
   }
