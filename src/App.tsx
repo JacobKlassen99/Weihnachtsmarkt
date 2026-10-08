@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { AdminView } from './components/admin/AdminView';
 import { ClientPortal } from './components/client/ClientPortal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { GuestRegistration } from './components/guest/GuestRegistration';
 import { Navbar, NavView } from './components/Navbar';
 import { PorteriaView } from './components/porteria/PorteriaView';
@@ -238,48 +239,50 @@ export default function App() {
 
       {/* Main View Container */}
       <main className="flex-1">
-        {currentView === 'public' && (
-          <PublicView
-            config={publicData.configuracion}
-            stands={publicData.stands}
-            lang={lang}
-            loading={loadingPublic}
-            onRefresh={() => loadPublicData(true)}
-          />
-        )}
+        <ErrorBoundary fallbackTitle="Error al cargar esta sección">
+          {currentView === 'public' && (
+            <PublicView
+              config={publicData.configuracion}
+              stands={publicData.stands}
+              lang={lang}
+              loading={loadingPublic}
+              onRefresh={() => loadPublicData(true)}
+            />
+          )}
 
-        {currentView === 'client' && (
-          <ClientPortal
-            initialToken={clientTokenParam}
-            lang={lang}
-          />
-        )}
+          {currentView === 'client' && (
+            <ClientPortal
+              initialToken={clientTokenParam}
+              lang={lang}
+            />
+          )}
 
-        {currentView === 'guest' && (
-          <GuestRegistration
-            token={guestTokenParam}
-            lang={lang}
-            onBackToHome={() => handleNavigate('public')}
-          />
-        )}
+          {currentView === 'guest' && (
+            <GuestRegistration
+              token={guestTokenParam}
+              lang={lang}
+              onBackToHome={() => handleNavigate('public')}
+            />
+          )}
 
-        {currentView === 'porteria' && (
-          <PorteriaView
-            sessionToken={sessionToken || undefined}
-            lang={lang}
-            onRequireLogin={() => handleNavigate('admin')}
-          />
-        )}
+          {currentView === 'porteria' && (
+            <PorteriaView
+              sessionToken={sessionToken || undefined}
+              lang={lang}
+              onRequireLogin={() => handleNavigate('admin')}
+            />
+          )}
 
-        {currentView === 'admin' && (
-          <AdminView
-            sessionToken={sessionToken}
-            onLoginSuccess={handleLoginSuccess}
-            onLogout={handleLogout}
-            lang={lang}
-            onHasUnsavedChange={setHasUnsavedForms}
-          />
-        )}
+          {currentView === 'admin' && (
+            <AdminView
+              sessionToken={sessionToken}
+              onLoginSuccess={handleLoginSuccess}
+              onLogout={handleLogout}
+              lang={lang}
+              onHasUnsavedChange={setHasUnsavedForms}
+            />
+          )}
+        </ErrorBoundary>
       </main>
 
       {/* Christmas Decorative Footer */}

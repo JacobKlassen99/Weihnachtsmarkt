@@ -14,14 +14,20 @@ export const UpdateNotification: React.FC<Props> = ({ lang, hasUnsavedForms = fa
   const t = translations[lang];
 
   useEffect(() => {
+    // In development mode, do not register service worker update listeners
+    if (import.meta.env.DEV) {
+      return;
+    }
+
     // Check if navigator.serviceWorker is supported
-    if ('serviceWorker' in navigator) {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // NEVER automatically reload. Just show notification banner.
                 setNeedRefresh(true);
                 setUpdateSW(() => async () => {
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
@@ -31,7 +37,7 @@ export const UpdateNotification: React.FC<Props> = ({ lang, hasUnsavedForms = fa
             });
           }
         });
-      });
+      }).catch(() => {});
     }
   }, []);
 
