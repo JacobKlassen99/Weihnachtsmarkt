@@ -203,50 +203,49 @@ export const PublicView: React.FC<Props> = ({
 
       {/* Main Content Area: Plano or Lista */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-        {/* Category Filter and Search */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-200">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              const isActive = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
-                    isActive
-                      ? 'bg-red-700 text-white border-red-700 shadow-xs'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
+        {/* Search and Refresh Bar */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder={t.search}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder={t.search}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
-              />
-            </div>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="p-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition shrink-0"
+            title={t.refreshData}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-700' : ''}`} />
+          </button>
+        </div>
 
-            <button
-              onClick={onRefresh}
-              disabled={loading}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition"
-              title={t.refreshData}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-700' : ''}`} />
-            </button>
-          </div>
+        {/* Categories: Vertical stack on phones (1 column), 4 columns on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 pb-6 border-b border-gray-200">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`w-full py-3 px-4 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2.5 border shadow-xs min-h-[46px] active:scale-98 ${
+                  isActive
+                    ? 'bg-red-700 text-white border-red-700 font-bold'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="text-center">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* LOADING INDICATOR */}
@@ -502,21 +501,37 @@ export const PublicView: React.FC<Props> = ({
 
                 {/* Category Selection */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
                     {t.selectCategory} *
                   </label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => {
-                      setFormCategory(e.target.value);
-                      setFormStandNumero('');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
-                  >
-                    <option value="Comida">{t.categoryComida}</option>
-                    <option value="Artesanal">{t.categoryArtesanal}</option>
-                    <option value="Games">{t.categoryGames}</option>
-                  </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+                    {[
+                      { id: 'Comida', label: t.categoryComida, icon: UtensilsCrossed },
+                      { id: 'Artesanal', label: t.categoryArtesanal, icon: Gift },
+                      { id: 'Games', label: t.categoryGames, icon: Gamepad2 },
+                    ].map((cat) => {
+                      const Icon = cat.icon;
+                      const isSelected = formCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setFormCategory(cat.id);
+                            setFormStandNumero('');
+                          }}
+                          className={`w-full py-3 px-3.5 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 border shadow-xs min-h-[46px] active:scale-98 ${
+                            isSelected
+                              ? 'bg-red-700 text-white border-red-700 font-bold'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="text-center">{cat.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Stand Selection */}

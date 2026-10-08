@@ -8,6 +8,8 @@ import {
   Copy,
   DollarSign,
   Edit2,
+  Gamepad2,
+  Gift,
   KeyRound,
   Layers,
   LayoutDashboard,
@@ -26,6 +28,7 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  UtensilsCrossed,
   X,
   XCircle,
 } from 'lucide-react';
@@ -134,7 +137,22 @@ export const AdminView: React.FC<Props> = ({
   });
 
   const [savingConfig, setSavingConfig] = useState(false);
+  const [savingStand, setSavingStand] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [savingEdition, setSavingEdition] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Get active session token reliably
+  const getActiveToken = (): string => {
+    return (
+      sessionToken ||
+      sessionStorage.getItem('weihnachtsmarkt_admin_token') ||
+      localStorage.getItem('weihnachtsmarkt_admin_token') ||
+      ''
+    );
+  };
 
   // Load Admin Data
   const loadAdminData = async (token: string, force = false) => {
@@ -157,8 +175,9 @@ export const AdminView: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    if (sessionToken) {
-      loadAdminData(sessionToken);
+    const token = getActiveToken();
+    if (token) {
+      loadAdminData(token);
     }
   }, [sessionToken]);
 
@@ -207,105 +226,142 @@ export const AdminView: React.FC<Props> = ({
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setActionMessage({ text, type });
-    setTimeout(() => setActionMessage(null), 3500);
+    setTimeout(() => setActionMessage(null), type === 'error' ? 6000 : 3500);
   };
 
   // Actions
   const handleSaveStand = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionToken || !editingStand.numero) return;
+    const token = getActiveToken();
+    if (!token) {
+      showFeedback('No hay sesión de administrador activa. Por favor inicia sesión.', 'error');
+      return;
+    }
+    if (!editingStand.numero) {
+      showFeedback('El número de stand es obligatorio', 'error');
+      return;
+    }
 
+    setSavingStand(true);
     try {
-      const res = await backendService.saveStand(sessionToken, editingStand);
+      const standToSave: Partial<Stand> = {
+        ...editingStand,
+        gestion: editingStand.gestion || adminData?.configuracion?.GESTION_ACTIVA,
+      };
+      const res = await backendService.saveStand(token, standToSave);
       if (!res.ok) throw new Error(res.error || 'Error al guardar stand');
       showFeedback('Stand guardado con éxito');
       setStandModalOpen(false);
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al guardar stand', 'error');
+    } finally {
+      setSavingStand(false);
     }
   };
 
   const handleConfirmRental = async (solicitud: Solicitud) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     const confirmMsg = t.confirmRentalPrompt.replace('{name}', solicitud.nombre);
     if (!window.confirm(confirmMsg)) return;
 
+    setActionInProgress(solicitud.id);
     try {
-      const res = await backendService.confirmarAlquiler(sessionToken, solicitud.id);
+      const res = await backendService.confirmarAlquiler(token, solicitud.id);
       if (!res.ok) throw new Error(res.error || 'Error al confirmar alquiler');
       showFeedback('Alquiler confirmado con éxito');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al confirmar alquiler', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleRejectRequest = async (solicitudId: string) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     if (!window.confirm(t.rejectRequestPrompt)) return;
 
+    setActionInProgress(solicitudId);
     try {
-      const res = await backendService.rechazarSolicitud(sessionToken, solicitudId);
+      const res = await backendService.rechazarSolicitud(token, solicitudId);
       if (!res.ok) throw new Error(res.error || 'Error al rechazar solicitud');
       showFeedback('Solicitud rechazada');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al rechazar solicitud', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleCancelRental = async (alquilerId: string) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     if (!window.confirm(t.cancelRentalPrompt)) return;
 
+    setActionInProgress(alquilerId);
     try {
-      const res = await backendService.cancelarAlquiler(sessionToken, alquilerId);
+      const res = await backendService.cancelarAlquiler(token, alquilerId);
       if (!res.ok) throw new Error(res.error || 'Error al cancelar alquiler');
       showFeedback('Alquiler cancelado');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al cancelar alquiler', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleRevokeGuest = async (invitadoId: string) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     if (!window.confirm(t.revokePrompt)) return;
 
+    setActionInProgress(invitadoId);
     try {
-      const res = await backendService.revocarInvitado(sessionToken, invitadoId);
+      const res = await backendService.revocarInvitado(token, invitadoId);
       if (!res.ok) throw new Error(res.error || 'Error al revocar invitado');
       showFeedback('Invitación revocada');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al revocar invitado', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
 
+    setSavingUser(true);
     try {
-      const res = await backendService.crearUsuario(sessionToken, newUserForm);
+      const res = await backendService.crearUsuario(token, newUserForm);
       if (!res.ok) throw new Error(res.error || 'Error al crear usuario');
       showFeedback('Usuario creado con éxito');
       setUserModalOpen(false);
       setNewUserForm({ usuario: '', nombre: '', password: '', rol: 'admin' });
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al crear usuario', 'error');
+    } finally {
+      setSavingUser(false);
     }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionToken || !targetUserToChangePass || !newPasswordValue.trim()) return;
+    const token = getActiveToken();
+    if (!token || !targetUserToChangePass || !newPasswordValue.trim()) return;
 
+    setSavingPassword(true);
     try {
       const res = await backendService.cambiarPassword(
-        sessionToken,
+        token,
         targetUserToChangePass,
         newPasswordValue.trim()
       );
@@ -314,71 +370,87 @@ export const AdminView: React.FC<Props> = ({
       setPasswordModalOpen(false);
       setNewPasswordValue('');
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al cambiar contraseña', 'error');
+    } finally {
+      setSavingPassword(false);
     }
   };
 
   const handleToggleUserStatus = async (user: Usuario) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     const newStatus = user.estado === 'activo' ? 'inactivo' : 'activo';
 
+    setActionInProgress(user.usuario);
     try {
       const res = await backendService.cambiarEstadoUsuario(
-        sessionToken,
+        token,
         user.usuario,
         newStatus
       );
       if (!res.ok) throw new Error(res.error || 'Error al cambiar estado');
       showFeedback('Estado de usuario modificado');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al cambiar estado', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleCreateEdition = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionToken || !newEditionForm.nombre.trim()) return;
+    const token = getActiveToken();
+    if (!token || !newEditionForm.nombre.trim()) return;
 
+    setSavingEdition(true);
     try {
-      const res = await backendService.nuevaGestion(sessionToken, newEditionForm);
+      const res = await backendService.nuevaGestion(token, newEditionForm);
       if (!res.ok) throw new Error(res.error || 'Error al crear gestión');
       showFeedback('Nueva gestión creada');
       setEditionModalOpen(false);
       setNewEditionForm({ nombre: '', copiarStands: true });
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al crear gestión', 'error');
+    } finally {
+      setSavingEdition(false);
     }
   };
 
   const handleActivateEdition = async (gestion: Gestion) => {
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
     const msg = t.activatePrompt.replace('{name}', gestion.nombre);
     if (!window.confirm(msg)) return;
 
+    const gestionIdentifier = gestion.id || gestion.nombre;
+    setActionInProgress(gestionIdentifier);
     try {
-      const res = await backendService.activarGestion(sessionToken, gestion.id);
+      const res = await backendService.activarGestion(token, gestionIdentifier);
       if (!res.ok) throw new Error(res.error || 'Error al activar gestión');
       showFeedback('Gestión activada con éxito');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al activar gestión', 'error');
+    } finally {
+      setActionInProgress(null);
     }
   };
 
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sessionToken) return;
+    const token = getActiveToken();
+    if (!token) return;
 
     setSavingConfig(true);
     try {
-      const res = await backendService.setConfig(sessionToken, configForm);
+      const res = await backendService.setConfig(token, configForm);
       if (!res.ok) throw new Error(res.error || 'Error al guardar configuración');
       showFeedback('Configuración guardada con éxito');
-      loadAdminData(sessionToken, true);
+      loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message, 'error');
+      showFeedback(err.message || 'Error al guardar configuración', 'error');
     } finally {
       setSavingConfig(false);
     }
@@ -546,35 +618,49 @@ export const AdminView: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Admin Module Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-gray-200">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
-                isActive
-                  ? 'bg-red-700 text-white border-red-700 shadow-xs'
-                  : 'bg-white text-gray-700 hover:text-red-700 hover:bg-gray-50 border-gray-200'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Admin Layout: 2-Column Grid on Mobile, Vertical Sidebar on Desktop */}
+      <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8 lg:items-start">
+        {/* Navigation Menu (2 Columns on Phone, Vertical Sticky Sidebar on Desktop) */}
+        <aside className="mb-6 lg:mb-0">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 lg:bg-gray-50/80 lg:p-3 lg:rounded-2xl lg:border lg:border-gray-200 lg:sticky lg:top-20">
+            <div className="hidden lg:block pb-2 mb-1 border-b border-gray-200 px-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                {lang === 'de' ? 'Menü' : 'Menú'}
+              </span>
+            </div>
+            {tabs.map((tab, idx) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              const isLast = idx === tabs.length - 1; // 9th item: Configuración
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as AdminTab)}
+                  className={`flex items-center gap-2 px-2.5 sm:px-3 py-3 rounded-xl text-[11px] sm:text-xs font-semibold transition border min-h-[46px] shadow-xs active:scale-98 ${
+                    isLast ? 'col-span-2 lg:col-span-1' : ''
+                  } ${
+                    isActive
+                      ? 'bg-red-700 text-white border-red-700 font-bold'
+                      : 'bg-white text-gray-700 hover:text-red-700 hover:bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="text-left leading-tight">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      {/* Loading Bar */}
-      {loadingData && !adminData && (
-        <div className="text-center py-16">
-          <RefreshCw className="w-8 h-8 text-red-700 animate-spin mx-auto mb-3" />
-          <p className="text-gray-700 text-xs font-semibold">{t.loading}</p>
-        </div>
-      )}
+        {/* Admin Content Area */}
+        <div className="min-w-0">
+          {/* Loading Bar */}
+          {loadingData && !adminData && (
+            <div className="text-center py-16">
+              <RefreshCw className="w-8 h-8 text-red-700 animate-spin mx-auto mb-3" />
+              <p className="text-gray-700 text-xs font-semibold">{t.loading}</p>
+            </div>
+          )}
 
       {/* 1. DASHBOARD TAB */}
       {activeTab === 'dashboard' && adminData && (
@@ -779,14 +865,20 @@ export const AdminView: React.FC<Props> = ({
                             </a>
                             <button
                               onClick={() => handleConfirmRental(sol)}
-                              className="p-1.5 rounded-lg bg-green-700 hover:bg-green-800 text-white transition shadow-xs"
+                              disabled={actionInProgress === sol.id}
+                              className="p-1.5 rounded-lg bg-green-700 hover:bg-green-800 disabled:opacity-50 text-white transition shadow-xs"
                               title={t.confirmRental}
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              {actionInProgress === sol.id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
                             </button>
                             <button
                               onClick={() => handleRejectRequest(sol.id)}
-                              className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition"
+                              disabled={actionInProgress === sol.id}
+                              className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 border border-red-200 transition"
                               title={t.rejectRequest}
                             >
                               <X className="w-3.5 h-3.5" />
@@ -860,10 +952,15 @@ export const AdminView: React.FC<Props> = ({
                           {alq.estado === 'activo' && (
                             <button
                               onClick={() => handleCancelRental(alq.id)}
-                              className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
+                              disabled={actionInProgress === alq.id}
+                              className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50 transition"
                               title={t.cancelRental}
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              {actionInProgress === alq.id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
                             </button>
                           )}
                         </div>
@@ -925,10 +1022,15 @@ export const AdminView: React.FC<Props> = ({
                         {inv.estado !== 'revocado' && (
                           <button
                             onClick={() => handleRevokeGuest(inv.id)}
-                            className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition shadow-xs"
+                            disabled={actionInProgress === inv.id}
+                            className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50 transition shadow-xs"
                             title={t.revokeInvitation}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {actionInProgress === inv.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         )}
                       </td>
@@ -1045,10 +1147,15 @@ export const AdminView: React.FC<Props> = ({
                           </button>
                           <button
                             onClick={() => handleToggleUserStatus(u)}
-                            className="p-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition shadow-xs"
+                            disabled={actionInProgress === u.usuario}
+                            className="p-1.5 rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-700 border border-gray-200 transition shadow-xs"
                             title={t.toggleStatus}
                           >
-                            <Sliders className="w-3.5 h-3.5" />
+                            {actionInProgress === u.usuario ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sliders className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -1076,9 +1183,11 @@ export const AdminView: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {adminData.gestiones.map((gest) => (
+            {adminData.gestiones.map((gest) => {
+              const gestIdentifier = gest.id || gest.nombre;
+              return (
               <div
-                key={gest.id}
+                key={gestIdentifier}
                 className={`p-5 rounded-xl border transition ${
                   gest.activa
                     ? 'bg-red-50/50 border-red-300 shadow-xs'
@@ -1094,9 +1203,13 @@ export const AdminView: React.FC<Props> = ({
                   ) : (
                     <button
                       onClick={() => handleActivateEdition(gest)}
-                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 text-[11px] font-semibold transition active:scale-95 shadow-xs"
+                      disabled={actionInProgress === gestIdentifier}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 border border-gray-300 text-[11px] font-semibold transition active:scale-95 shadow-xs"
                     >
-                      {t.activateEdition}
+                      {actionInProgress === gestIdentifier && (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      )}
+                      <span>{t.activateEdition}</span>
                     </button>
                   )}
                 </div>
@@ -1104,7 +1217,8 @@ export const AdminView: React.FC<Props> = ({
                   {lang === 'de' ? 'Erstellt am:' : 'Creada:'} {gest.fecha_creacion || '2026'}
                 </p>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}
@@ -1218,6 +1332,8 @@ export const AdminView: React.FC<Props> = ({
           </form>
         </div>
       )}
+        </div>
+      </div>
 
       {/* MODAL: Stand Editor */}
       {standModalOpen && (
@@ -1252,20 +1368,36 @@ export const AdminView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.standCategory} *
                 </label>
-                <select
-                  value={editingStand.categoria}
-                  onChange={(e) =>
-                    setEditingStand({ ...editingStand, categoria: e.target.value })
-                  }
-                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
-                >
-                  <option value="Comida">{t.categoryComida}</option>
-                  <option value="Artesanal">{t.categoryArtesanal}</option>
-                  <option value="Games">{t.categoryGames}</option>
-                </select>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+                  {[
+                    { id: 'Comida', label: t.categoryComida, icon: UtensilsCrossed },
+                    { id: 'Artesanal', label: t.categoryArtesanal, icon: Gift },
+                    { id: 'Games', label: t.categoryGames, icon: Gamepad2 },
+                  ].map((cat) => {
+                    const Icon = cat.icon;
+                    const isSelected = editingStand.categoria === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() =>
+                          setEditingStand({ ...editingStand, categoria: cat.id })
+                        }
+                        className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 border shadow-xs min-h-[42px] active:scale-98 ${
+                          isSelected
+                            ? 'bg-red-700 text-white border-red-700 font-bold'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-center">{cat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -1317,15 +1449,18 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setStandModalOpen(false)}
+                  disabled={savingStand}
                   className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
+                  disabled={savingStand}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
-                  {t.save}
+                  {savingStand && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{t.save}</span>
                 </button>
               </div>
             </form>
@@ -1411,15 +1546,18 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setUserModalOpen(false)}
+                  disabled={savingUser}
                   className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
+                  disabled={savingUser}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
-                  {t.create}
+                  {savingUser && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{t.create}</span>
                 </button>
               </div>
             </form>
@@ -1462,15 +1600,18 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setPasswordModalOpen(false)}
+                  disabled={savingPassword}
                   className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
+                  disabled={savingPassword}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
-                  {t.save}
+                  {savingPassword && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{t.save}</span>
                 </button>
               </div>
             </form>
@@ -1528,15 +1669,18 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setEditionModalOpen(false)}
+                  disabled={savingEdition}
                   className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
+                  disabled={savingEdition}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
-                  {t.create}
+                  {savingEdition && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{t.create}</span>
                 </button>
               </div>
             </form>

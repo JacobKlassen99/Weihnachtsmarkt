@@ -13,6 +13,9 @@ import {
 export const BACKEND_URL =
   'https://script.google.com/macros/s/AKfycbzPYXuXu8FSvtmRVaDywv8OxsDZZX45WfxpNBoPmdF29cnezThtfv2bxRxoELdTjUSz/exec';
 
+// Proxy endpoint for Netlify and Vite development server
+export const PROXY_URL = '/api/backend';
+
 // Temporal in-memory cache
 interface CacheEntry<T> {
   data: T;
@@ -54,22 +57,55 @@ class BackendService {
   }
 
   /**
-   * Helper to execute a POST request to Google Apps Script using text/plain
-   * to avoid browser CORS preflight issues while allowing GAS to parse e.postData.contents
+   * Helper to execute a POST request to Google Apps Script.
+   * Tries the local proxy / Netlify function first (avoiding CORS and redirect issues),
+   * and falls back to direct Google Apps Script request if proxy is not reachable.
    */
   private async postRequest<T>(payload: Record<string, unknown>): Promise<T> {
+    const bodyStr = JSON.stringify(payload);
+
+    // 1. Try via proxy (/api/backend or Netlify function)
+    try {
+      const proxyResponse = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: bodyStr,
+      });
+
+      if (proxyResponse.ok) {
+        const text = await proxyResponse.text();
+        try {
+          const parsed = JSON.parse(text);
+          return parsed as T;
+        } catch {
+          // If not valid JSON, check for HTML error
+          if (text.includes('<title>') || text.includes('<!DOCTYPE')) {
+            const match = text.match(/<title>(.*?)<\/title>/i);
+            throw new Error(`El servidor respondió con HTML (${match ? match[1] : 'Error'}).`);
+          }
+        }
+      }
+    } catch {
+      // If proxy fetch failed (e.g. 404 or network issue), fall through to direct fetch
+    }
+
+    // 2. Direct fetch to Google Apps Script as fallback
     try {
       const response = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: JSON.stringify(payload),
+        body: bodyStr,
         redirect: 'follow',
       });
 
       if (!response.ok) {
-        throw new Error(`Error en el servidor (${response.status}: ${response.statusText || 'Sin respuesta'})`);
+        throw new Error(
+          `Error en el servidor (${response.status}: ${response.statusText || 'Sin respuesta'})`
+        );
       }
 
       const text = await response.text();
@@ -100,44 +136,52 @@ class BackendService {
       if (cached) return cached;
     }
 
+    let response: Response | null = null;
+
+    // Try proxy first
     try {
-      const response = await fetch(`${BACKEND_URL}?action=public`, {
+      response = await fetch(`${PROXY_URL}?action=public`, {
         method: 'GET',
       });
-
-      if (!response.ok) {
-        throw new Error(`Error al cargar datos públicos (${response.status})`);
-      }
-
-      const result = await response.json();
-      if (!result.ok) {
-        throw new Error(result.error || 'No se pudieron cargar los datos del evento');
-      }
-
-      const publicData: PublicData = {
-        configuracion: result.data?.configuracion || {
-          NOMBRE_EVENTO: 'Weihnachtsmarkt',
-          IDIOMA_PREDETERMINADO: 'es',
-          WHATSAPP_ADMIN: '75593587',
-          MONEDA: '$us',
-          MAX_INVITADOS: '5',
-          GESTION_ACTIVA: 'GES-2026',
-          MENSAJE_WHATSAPP_ES:
-            'Hola, soy {NOMBRE}. Solicité el Stand {STAND} de la categoría {CATEGORIA} para el Weihnachtsmarkt.',
-          MENSAJE_WHATSAPP_DE:
-            'Hallo, ich bin {NOMBRE}. Ich habe Stand {STAND} in der Kategorie {CATEGORIA} für den Weihnachtsmarkt angefragt.',
-        },
-        stands: Array.isArray(result.data?.stands) ? result.data.stands : [],
-      };
-
-      this.setCache(cacheKey, publicData);
-      return publicData;
-    } catch (err: any) {
-      // If network fails, check if we have any cached data even if expired
-      const stale = this.cache.get(cacheKey) as CacheEntry<PublicData> | undefined;
-      if (stale) return stale.data;
-      throw err;
+      if (!response.ok) response = null;
+    } catch {
+      response = null;
     }
+
+    // Fallback to direct fetch
+    if (!response) {
+      response = await fetch(`${BACKEND_URL}?action=public`, {
+        method: 'GET',
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`Error al cargar datos públicos (${response.status})`);
+    }
+
+    const result = await response.json();
+    if (!result.ok) {
+      throw new Error(result.error || 'No se pudieron cargar los datos del evento');
+    }
+
+    const publicData: PublicData = {
+      configuracion: result.data?.configuracion || {
+        NOMBRE_EVENTO: 'Weihnachtsmarkt',
+        IDIOMA_PREDETERMINADO: 'es',
+        WHATSAPP_ADMIN: '75593587',
+        MONEDA: '$us',
+        MAX_INVITADOS: '5',
+        GESTION_ACTIVA: 'GES-2026',
+        MENSAJE_WHATSAPP_ES:
+          'Hola, soy {NOMBRE}. Solicité el Stand {STAND} de la categoría {CATEGORIA} para el Weihnachtsmarkt.',
+        MENSAJE_WHATSAPP_DE:
+          'Hallo, ich bin {NOMBRE}. Ich habe Stand {STAND} in der Kategorie {CATEGORIA} für den Weihnachtsmarkt angefragt.',
+      },
+      stands: Array.isArray(result.data?.stands) ? result.data.stands : [],
+    };
+
+    this.setCache(cacheKey, publicData);
+    return publicData;
   }
 
   // 2. SOLICITUD DE ALQUILER
@@ -312,6 +356,7 @@ class BackendService {
       posicion_y: stand.posicion_y,
       ancho: stand.ancho,
       alto: stand.alto,
+      gestion: stand.gestion,
     });
 
     if (res.ok) {
@@ -332,6 +377,8 @@ class BackendService {
       id: solicitudId,
       id_solicitud: solicitudId,
       solicitudId: solicitudId,
+      solicitud_id: solicitudId,
+      solicitud: solicitudId,
     });
 
     if (res.ok) {
@@ -352,6 +399,8 @@ class BackendService {
       id: solicitudId,
       id_solicitud: solicitudId,
       solicitudId: solicitudId,
+      solicitud_id: solicitudId,
+      solicitud: solicitudId,
     });
 
     if (res.ok) {
@@ -372,6 +421,8 @@ class BackendService {
       id: alquilerId,
       id_alquiler: alquilerId,
       alquilerId: alquilerId,
+      alquiler_id: alquilerId,
+      alquiler: alquilerId,
     });
 
     if (res.ok) {
@@ -392,6 +443,8 @@ class BackendService {
       id: invitadoId,
       id_invitado: invitadoId,
       invitadoId: invitadoId,
+      invitado_id: invitadoId,
+      invitado: invitadoId,
     });
 
     if (res.ok) {
@@ -410,10 +463,13 @@ class BackendService {
       action: 'crearUsuario',
       token,
       usuario: usuario.usuario,
+      username: usuario.usuario,
+      user: usuario.usuario,
       nombre: usuario.nombre,
       password: usuario.password,
+      pass: usuario.password,
       rol: usuario.rol,
-      user: usuario,
+      userData: usuario,
     });
 
     if (res.ok) {
@@ -433,9 +489,13 @@ class BackendService {
       action: 'cambiarPassword',
       token,
       usuario,
+      user: usuario,
+      username: usuario,
       password: nuevaPassword,
       nuevaPassword,
       newPassword: nuevaPassword,
+      nueva_password: nuevaPassword,
+      password_nueva: nuevaPassword,
     });
 
     return res;
@@ -451,8 +511,11 @@ class BackendService {
       action: 'cambiarEstadoUsuario',
       token,
       usuario,
+      user: usuario,
+      username: usuario,
       estado: nuevoEstado,
       nuevoEstado,
+      nuevo_estado: nuevoEstado,
     });
 
     if (res.ok) {
@@ -471,6 +534,8 @@ class BackendService {
       action: 'setConfig',
       token,
       config,
+      configuracion: config,
+      data: config,
       NOMBRE_EVENTO: config.NOMBRE_EVENTO,
       IDIOMA_PREDETERMINADO: config.IDIOMA_PREDETERMINADO,
       WHATSAPP_ADMIN: config.WHATSAPP_ADMIN,
@@ -479,6 +544,14 @@ class BackendService {
       GESTION_ACTIVA: config.GESTION_ACTIVA,
       MENSAJE_WHATSAPP_ES: config.MENSAJE_WHATSAPP_ES,
       MENSAJE_WHATSAPP_DE: config.MENSAJE_WHATSAPP_DE,
+      nombre_evento: config.NOMBRE_EVENTO,
+      idioma_predeterminado: config.IDIOMA_PREDETERMINADO,
+      whatsapp_admin: config.WHATSAPP_ADMIN,
+      moneda: config.MONEDA,
+      max_invitados: config.MAX_INVITADOS,
+      gestion_activa: config.GESTION_ACTIVA,
+      mensaje_whatsapp_es: config.MENSAJE_WHATSAPP_ES,
+      mensaje_whatsapp_de: config.MENSAJE_WHATSAPP_DE,
     });
 
     if (res.ok) {
@@ -497,9 +570,10 @@ class BackendService {
       action: 'nuevaGestion',
       token,
       nombre: gestion.nombre,
+      gestion: gestion.nombre,
+      id_gestion: gestion.nombre,
       copiarStands: gestion.copiarStands,
       copiar_stands: gestion.copiarStands,
-      gestion: gestion.nombre,
     });
 
     if (res.ok) {

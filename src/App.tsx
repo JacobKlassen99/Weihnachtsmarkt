@@ -52,10 +52,16 @@ export default function App() {
 
   // Admin Session State
   const [sessionToken, setSessionToken] = useState<string | null>(() => {
-    return sessionStorage.getItem('weihnachtsmarkt_admin_token') || null;
+    return (
+      sessionStorage.getItem('weihnachtsmarkt_admin_token') ||
+      localStorage.getItem('weihnachtsmarkt_admin_token') ||
+      null
+    );
   });
   const [adminUser, setAdminUser] = useState<Usuario | null>(() => {
-    const saved = sessionStorage.getItem('weihnachtsmarkt_admin_user');
+    const saved =
+      sessionStorage.getItem('weihnachtsmarkt_admin_user') ||
+      localStorage.getItem('weihnachtsmarkt_admin_user');
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -189,6 +195,8 @@ export default function App() {
     setAdminUser(user);
     sessionStorage.setItem('weihnachtsmarkt_admin_token', token);
     sessionStorage.setItem('weihnachtsmarkt_admin_user', JSON.stringify(user));
+    localStorage.setItem('weihnachtsmarkt_admin_token', token);
+    localStorage.setItem('weihnachtsmarkt_admin_user', JSON.stringify(user));
   };
 
   const handleLogout = () => {
@@ -196,6 +204,8 @@ export default function App() {
     setAdminUser(null);
     sessionStorage.removeItem('weihnachtsmarkt_admin_token');
     sessionStorage.removeItem('weihnachtsmarkt_admin_user');
+    localStorage.removeItem('weihnachtsmarkt_admin_token');
+    localStorage.removeItem('weihnachtsmarkt_admin_user');
   };
 
   const t = translations[lang];
