@@ -46,8 +46,10 @@ export const translations = {
 
     // Public view
     eventEdition: 'Gestión activa',
+    standsPlan: 'Plano de Stands',
+    standsList: 'Lista de Stands',
     standsMap: 'Plano y Lista de Stands',
-    standsMapSubtitle: 'Descubre los espacios disponibles para gastronomía, artesanías y entretenimiento.',
+    standsMapSubtitle: 'Espacios para gastronomía, artesanías y juegos.',
     categoryComida: 'Comida & Bebida',
     categoryArtesanal: 'Artesanías & Regalos',
     categoryGames: 'Juegos & Atracciones',
@@ -276,8 +278,10 @@ export const translations = {
 
     // Public view
     eventEdition: 'Aktuelle Ausgabe',
+    standsPlan: 'Standplan',
+    standsList: 'Standliste',
     standsMap: 'Standplan & Übersicht',
-    standsMapSubtitle: 'Entdecken Sie die verfügbaren Plätze für Gastronomie, Kunsthandwerk und Unterhaltung.',
+    standsMapSubtitle: 'Plätze für Gastronomie, Kunsthandwerk und Spiele.',
     categoryComida: 'Essen & Trinken',
     categoryArtesanal: 'Handwerk & Geschenke',
     categoryGames: 'Spiele & Attraktionen',

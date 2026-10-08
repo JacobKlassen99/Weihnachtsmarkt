@@ -201,10 +201,10 @@ export default function App() {
   const t = translations[lang];
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-950 text-stone-100 font-sans">
+    <div className="min-h-screen flex flex-col bg-white text-gray-900 font-sans">
       {/* Offline Indicator Banner */}
       {!isOnline && (
-        <div className="bg-amber-600 text-stone-950 px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 shadow-md sticky top-0 z-50">
+        <div className="bg-amber-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 shadow-xs sticky top-0 z-50">
           <WifiOff className="w-4 h-4" />
           <span>{t.offlineNotice}</span>
         </div>
@@ -212,14 +212,14 @@ export default function App() {
 
       {/* Network Error Toast if initial fetch fails */}
       {networkError && (
-        <div className="bg-red-950 border-b border-red-800 text-red-200 px-4 py-2.5 text-xs flex items-center justify-between gap-2">
+        <div className="bg-red-50 border-b border-red-200 text-red-800 px-4 py-2.5 text-xs flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{networkError}</span>
           </div>
           <button
             onClick={() => loadPublicData(true)}
-            className="px-2.5 py-1 rounded-lg bg-red-800 hover:bg-red-700 text-white font-bold text-[11px] shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold text-[11px] shrink-0 transition"
           >
             {t.retry}
           </button>
@@ -238,7 +238,7 @@ export default function App() {
       />
 
       {/* Main View Container */}
-      <main className="flex-1">
+      <main className="flex-1 bg-white">
         <ErrorBoundary fallbackTitle="Error al cargar esta sección">
           {currentView === 'public' && (
             <PublicView
@@ -285,21 +285,21 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      {/* Christmas Decorative Footer */}
-      <footer className="bg-stone-950 border-t border-red-950/60 py-8 px-4 text-center text-xs text-stone-500 mb-14 md:mb-0">
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-8 px-4 text-center text-xs text-gray-500 mb-14 md:mb-0">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="font-serif font-bold text-stone-300">
+            <Sparkles className="w-4 h-4 text-red-700" />
+            <span className="font-bold text-gray-900">
               {publicData.configuracion?.NOMBRE_EVENTO || 'Weihnachtsmarkt'}
             </span>
             <span>•</span>
-            <span className="text-amber-400 font-mono">
+            <span className="text-red-700 font-mono font-medium">
               {publicData.configuracion?.GESTION_ACTIVA || 'GES-2026'}
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px] text-stone-400">
+          <div className="flex items-center gap-4 text-[11px] text-gray-500">
             <span>PWA Oficial • Google Sheets Backend</span>
             <span>•</span>
             <span>Netlify Ready</span>

@@ -395,29 +395,29 @@ export const AdminView: React.FC<Props> = ({
   // If NOT logged in, show Login Form
   if (!sessionToken) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-800 p-6 sm:p-8 shadow-2xl text-stone-100">
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-white">
+        <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 p-6 sm:p-8 shadow-sm text-gray-900">
           <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-red-950 border border-red-800/80 text-amber-400 flex items-center justify-center mx-auto mb-3">
-              <Lock className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 text-red-700 flex items-center justify-center mx-auto mb-3">
+              <Lock className="w-6 h-6" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white font-serif">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               {t.adminLoginTitle}
             </h2>
-            <p className="text-xs text-stone-400 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               {t.adminLoginSubtitle}
             </p>
           </div>
 
           {loginError && (
-            <div className="p-3 mb-5 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs">
+            <div className="p-3 mb-5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
               {loginError}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 {t.username}
               </label>
               <input
@@ -426,12 +426,12 @@ export const AdminView: React.FC<Props> = ({
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
                 placeholder="usuario"
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 {t.password}
               </label>
               <input
@@ -440,14 +440,14 @@ export const AdminView: React.FC<Props> = ({
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
               />
             </div>
 
             <button
               type="submit"
               disabled={loggingIn}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold text-xs shadow-xs transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loggingIn ? (
                 <>
@@ -492,15 +492,15 @@ export const AdminView: React.FC<Props> = ({
   const totalAccesos = adminData?.accesos?.length || 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-28">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-28 bg-white text-gray-900">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-stone-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+            <span className="text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-md border border-red-200 font-mono">
               {adminData?.configuracion?.GESTION_ACTIVA || 'GES-2026'}
             </span>
-            <h1 className="text-xl sm:text-2xl font-black text-white font-serif">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">
               {t.navAdmin}
             </h1>
           </div>
@@ -510,16 +510,16 @@ export const AdminView: React.FC<Props> = ({
           <button
             onClick={() => sessionToken && loadAdminData(sessionToken, true)}
             disabled={loadingData}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs border border-stone-800 transition active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-700 text-xs border border-gray-300 transition active:scale-95 disabled:opacity-50 shadow-xs"
             title={t.refreshData}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadingData ? 'animate-spin text-amber-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingData ? 'animate-spin text-red-700' : ''}`} />
             <span>{t.refreshData}</span>
           </button>
 
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-950/70 hover:bg-red-900/80 text-red-300 text-xs border border-red-800/60 transition active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-red-50 text-red-700 text-xs border border-gray-300 hover:border-red-200 transition active:scale-95"
             title={t.logout}
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -531,23 +531,23 @@ export const AdminView: React.FC<Props> = ({
       {/* Action Notification Toast */}
       {actionMessage && (
         <div
-          className={`p-3.5 mb-6 rounded-2xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
+          className={`p-3.5 mb-6 rounded-xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
             actionMessage.type === 'success'
-              ? 'bg-emerald-950 border-emerald-700 text-emerald-200'
-              : 'bg-red-950 border-red-700 text-red-200'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
           }`}
         >
           {actionMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-red-400" />
+            <AlertCircle className="w-4 h-4 text-red-600" />
           )}
           <span>{actionMessage.text}</span>
         </div>
       )}
 
       {/* Admin Module Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-stone-800/60">
+      <div className="flex items-center gap-1 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-gray-200">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -555,10 +555,10 @@ export const AdminView: React.FC<Props> = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
                 isActive
-                  ? 'bg-amber-500 text-stone-950 shadow-md shadow-amber-500/20'
-                  : 'bg-stone-900/80 text-stone-400 hover:text-white hover:bg-stone-850 border border-stone-800/80'
+                  ? 'bg-red-700 text-white border-red-700 shadow-xs'
+                  : 'bg-white text-gray-700 hover:text-red-700 hover:bg-gray-50 border-gray-200'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -571,8 +571,8 @@ export const AdminView: React.FC<Props> = ({
       {/* Loading Bar */}
       {loadingData && !adminData && (
         <div className="text-center py-16">
-          <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto mb-3" />
-          <p className="text-stone-300 text-xs font-semibold">{t.loading}</p>
+          <RefreshCw className="w-8 h-8 text-red-700 animate-spin mx-auto mb-3" />
+          <p className="text-gray-700 text-xs font-semibold">{t.loading}</p>
         </div>
       )}
 
@@ -580,61 +580,61 @@ export const AdminView: React.FC<Props> = ({
       {activeTab === 'dashboard' && adminData && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-stone-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-gray-500 block mb-1">
                 {t.statsStands}
               </span>
-              <span className="text-2xl font-black text-white font-mono">{totalStands}</span>
+              <span className="text-2xl font-black text-gray-900 font-mono">{totalStands}</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-emerald-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-green-700 block mb-1">
                 {t.statsAvailable}
               </span>
-              <span className="text-2xl font-black text-emerald-400 font-mono">
+              <span className="text-2xl font-black text-green-700 font-mono">
                 {disponibles}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-amber-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-gray-600 block mb-1">
                 {t.statsOccupied}
               </span>
-              <span className="text-2xl font-black text-amber-400 font-mono">{ocupados}</span>
+              <span className="text-2xl font-black text-gray-700 font-mono">{ocupados}</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-red-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-red-700 block mb-1">
                 {t.statsPendingRequests}
               </span>
-              <span className="text-2xl font-black text-red-400 font-mono">
+              <span className="text-2xl font-black text-red-700 font-mono">
                 {solicitudesPendientes}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-stone-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-gray-500 block mb-1">
                 {t.statsActiveRentals}
               </span>
-              <span className="text-2xl font-black text-white font-mono">
+              <span className="text-2xl font-black text-gray-900 font-mono">
                 {alquileresActivos}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm">
-              <span className="text-[11px] font-semibold text-stone-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs">
+              <span className="text-[11px] font-semibold text-gray-500 block mb-1">
                 {t.statsGuests}
               </span>
-              <span className="text-2xl font-black text-white font-mono">
+              <span className="text-2xl font-black text-gray-900 font-mono">
                 {totalInvitados}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-sm col-span-2 sm:col-span-1">
-              <span className="text-[11px] font-semibold text-sky-400 block mb-1">
+            <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-xs col-span-2 sm:col-span-1">
+              <span className="text-[11px] font-semibold text-red-700 block mb-1">
                 {t.statsEntries}
               </span>
-              <span className="text-2xl font-black text-sky-400 font-mono">
+              <span className="text-2xl font-black text-red-700 font-mono">
                 {totalAccesos}
               </span>
             </div>
@@ -646,7 +646,7 @@ export const AdminView: React.FC<Props> = ({
       {activeTab === 'stands' && adminData && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white font-serif">{t.tabStands}</h3>
+            <h3 className="text-base font-bold text-gray-900">{t.tabStands}</h3>
             <button
               onClick={() => {
                 setEditingStand({
@@ -658,17 +658,17 @@ export const AdminView: React.FC<Props> = ({
                 });
                 setStandModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-semibold text-xs transition active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{t.newStand}</span>
             </button>
           </div>
 
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">#</th>
                     <th className="p-3">{t.standCategory}</th>
@@ -678,26 +678,26 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.stands.map((stand) => (
-                    <tr key={stand.id || stand.numero} className="hover:bg-stone-850">
-                      <td className="p-3 font-bold font-mono text-white">#{stand.numero}</td>
+                    <tr key={stand.id || stand.numero} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-bold font-mono text-gray-900">#{stand.numero}</td>
                       <td className="p-3">{stand.categoria}</td>
-                      <td className="p-3 font-mono">
+                      <td className="p-3 font-mono font-medium">
                         {stand.precio} {adminData.configuracion?.MONEDA || '$us'}
                       </td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             stand.estado === 'disponible'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                              : 'bg-red-950 text-red-300 border border-red-800/50'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200'
                           }`}
                         >
                           {stand.estado}
                         </span>
                       </td>
-                      <td className="p-3 max-w-xs truncate text-stone-400">
+                      <td className="p-3 max-w-xs truncate text-gray-500">
                         {stand.descripcion || '-'}
                       </td>
                       <td className="p-3 text-right">
@@ -706,7 +706,7 @@ export const AdminView: React.FC<Props> = ({
                             setEditingStand(stand);
                             setStandModalOpen(true);
                           }}
-                          className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 transition"
+                          className="p-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition shadow-xs"
                           title={t.edit}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -716,7 +716,7 @@ export const AdminView: React.FC<Props> = ({
                   ))}
                   {adminData.stands.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-stone-500">
+                      <td colSpan={6} className="p-8 text-center text-gray-500">
                         {t.noStandsAvailable}
                       </td>
                     </tr>
@@ -731,11 +731,11 @@ export const AdminView: React.FC<Props> = ({
       {/* 3. SOLICITUDES TAB */}
       {activeTab === 'solicitudes' && adminData && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white font-serif">{t.tabRequests}</h3>
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <h3 className="text-base font-bold text-gray-900">{t.tabRequests}</h3>
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">Stand</th>
                     <th className="p-3">{t.fullName}</th>
@@ -745,21 +745,21 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.solicitudes.map((sol) => (
-                    <tr key={sol.id} className="hover:bg-stone-850">
-                      <td className="p-3 font-mono font-bold text-amber-400">#{sol.stand}</td>
-                      <td className="p-3 font-semibold text-white">{sol.nombre}</td>
+                    <tr key={sol.id} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-mono font-bold text-red-700">#{sol.stand}</td>
+                      <td className="p-3 font-semibold text-gray-900">{sol.nombre}</td>
                       <td className="p-3 font-mono">{sol.telefono}</td>
-                      <td className="p-3 text-stone-400">{sol.fecha || '-'}</td>
+                      <td className="p-3 text-gray-500">{sol.fecha || '-'}</td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             sol.estado === 'confirmada'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
                               : sol.estado === 'rechazada'
-                              ? 'bg-stone-800 text-stone-400'
-                              : 'bg-amber-950 text-amber-300 border border-amber-800/50'
+                              ? 'bg-gray-100 text-gray-600 border border-gray-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
                         >
                           {sol.estado}
@@ -772,35 +772,35 @@ export const AdminView: React.FC<Props> = ({
                               href={`https://wa.me/${sol.telefono.replace(/\D/g, '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900 transition"
+                              className="p-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition shadow-xs"
                               title="WhatsApp"
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
                             </a>
                             <button
                               onClick={() => handleConfirmRental(sol)}
-                              className="p-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white transition"
+                              className="p-1.5 rounded-lg bg-green-700 hover:bg-green-800 text-white transition shadow-xs"
                               title={t.confirmRental}
                             >
                               <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleRejectRequest(sol.id)}
-                              className="p-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-red-200 transition"
+                              className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition"
                               title={t.rejectRequest}
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          <span className="text-stone-500 text-[10px]">-</span>
+                          <span className="text-gray-400 text-[10px]">-</span>
                         )}
                       </td>
                     </tr>
                   ))}
                   {adminData.solicitudes.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-stone-500">
+                      <td colSpan={6} className="p-8 text-center text-gray-500">
                         {lang === 'de' ? 'Keine Anfragen vorhanden.' : 'No hay solicitudes registradas.'}
                       </td>
                     </tr>
@@ -815,11 +815,11 @@ export const AdminView: React.FC<Props> = ({
       {/* 4. ALQUILERES TAB */}
       {activeTab === 'alquileres' && adminData && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white font-serif">{t.tabRentals}</h3>
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <h3 className="text-base font-bold text-gray-900">{t.tabRentals}</h3>
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">Stand</th>
                     <th className="p-3">{t.clientName}</th>
@@ -829,19 +829,19 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.alquileres.map((alq) => (
-                    <tr key={alq.id} className="hover:bg-stone-850">
-                      <td className="p-3 font-mono font-bold text-amber-400">#{alq.stand}</td>
-                      <td className="p-3 font-semibold text-white">{alq.cliente}</td>
+                    <tr key={alq.id} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-mono font-bold text-red-700">#{alq.stand}</td>
+                      <td className="p-3 font-semibold text-gray-900">{alq.cliente}</td>
                       <td className="p-3 font-mono">{alq.telefono}</td>
-                      <td className="p-3 text-stone-400">{alq.fecha_alquiler || '-'}</td>
+                      <td className="p-3 text-gray-500">{alq.fecha_alquiler || '-'}</td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             alq.estado === 'activo'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                              : 'bg-red-950 text-red-300 border border-red-800/50'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : 'bg-red-50 text-red-700 border border-red-200'
                           }`}
                         >
                           {alq.estado}
@@ -851,7 +851,7 @@ export const AdminView: React.FC<Props> = ({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => copyClientUrl(alq)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition text-[11px]"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 transition text-[11px] shadow-xs"
                             title={t.copyClientLink}
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -860,7 +860,7 @@ export const AdminView: React.FC<Props> = ({
                           {alq.estado === 'activo' && (
                             <button
                               onClick={() => handleCancelRental(alq.id)}
-                              className="p-1.5 rounded-lg bg-red-950 text-red-300 border border-red-800/60 hover:bg-red-900 transition"
+                              className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition"
                               title={t.cancelRental}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -872,7 +872,7 @@ export const AdminView: React.FC<Props> = ({
                   ))}
                   {adminData.alquileres.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-stone-500">
+                      <td colSpan={6} className="p-8 text-center text-gray-500">
                         {lang === 'de' ? 'Keine Mietverträge vorhanden.' : 'No hay alquileres confirmados aún.'}
                       </td>
                     </tr>
@@ -887,11 +887,11 @@ export const AdminView: React.FC<Props> = ({
       {/* 5. INVITADOS TAB */}
       {activeTab === 'invitados' && adminData && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white font-serif">{t.tabGuests}</h3>
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <h3 className="text-base font-bold text-gray-900">{t.tabGuests}</h3>
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">Stand</th>
                     <th className="p-3">{t.guestName}</th>
@@ -900,32 +900,32 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.invitados.map((inv) => (
-                    <tr key={inv.id || inv.token_invitacion} className="hover:bg-stone-850">
-                      <td className="p-3 font-mono font-bold text-amber-400">#{inv.stand}</td>
-                      <td className="p-3 font-semibold text-white">
+                    <tr key={inv.id || inv.token_invitacion} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-mono font-bold text-red-700">#{inv.stand}</td>
+                      <td className="p-3 font-semibold text-gray-900">
                         {inv.nombre_invitado || t.notRegisteredYet}
                       </td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             inv.estado === 'registrado'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
                               : inv.estado === 'revocado'
-                              ? 'bg-red-950 text-red-300 border border-red-800/50'
-                              : 'bg-amber-950 text-amber-300 border border-amber-800/50'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
                         >
                           {inv.estado}
                         </span>
                       </td>
-                      <td className="p-3 text-stone-400">{inv.fecha_registro || '-'}</td>
+                      <td className="p-3 text-gray-500">{inv.fecha_registro || '-'}</td>
                       <td className="p-3 text-right">
                         {inv.estado !== 'revocado' && (
                           <button
                             onClick={() => handleRevokeGuest(inv.id)}
-                            className="p-1.5 rounded-lg bg-red-950 text-red-300 border border-red-800/60 hover:bg-red-900 transition"
+                            className="p-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition shadow-xs"
                             title={t.revokeInvitation}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -936,7 +936,7 @@ export const AdminView: React.FC<Props> = ({
                   ))}
                   {adminData.invitados.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-stone-500">
+                      <td colSpan={5} className="p-8 text-center text-gray-500">
                         {lang === 'de' ? 'Keine Gäste registriert.' : 'No hay invitados registrados aún.'}
                       </td>
                     </tr>
@@ -951,11 +951,11 @@ export const AdminView: React.FC<Props> = ({
       {/* 6. ACCESOS TAB */}
       {activeTab === 'accesos' && adminData && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-white font-serif">{t.tabAccess}</h3>
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <h3 className="text-base font-bold text-gray-900">{t.tabAccess}</h3>
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">{t.time}</th>
                     <th className="p-3">{t.fullName}</th>
@@ -964,19 +964,19 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3">{t.scannedBy}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.accesos.map((acc, idx) => (
-                    <tr key={acc.id || idx} className="hover:bg-stone-850">
-                      <td className="p-3 font-mono text-stone-400">{acc.fecha_hora}</td>
-                      <td className="p-3 font-semibold text-white">{acc.nombre}</td>
-                      <td className="p-3 font-mono text-amber-400">#{acc.stand}</td>
+                    <tr key={acc.id || idx} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-mono text-gray-500">{acc.fecha_hora}</td>
+                      <td className="p-3 font-semibold text-gray-900">{acc.nombre}</td>
+                      <td className="p-3 font-mono font-bold text-red-700">#{acc.stand}</td>
                       <td className="p-3 capitalize">{acc.tipo}</td>
-                      <td className="p-3 text-stone-400">{acc.portero || 'Portería'}</td>
+                      <td className="p-3 text-gray-500">{acc.portero || 'Portería'}</td>
                     </tr>
                   ))}
                   {adminData.accesos.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-stone-500">
+                      <td colSpan={5} className="p-8 text-center text-gray-500">
                         {lang === 'de' ? 'Noch keine Scans protokolliert.' : 'No hay entradas escaneadas registradas aún.'}
                       </td>
                     </tr>
@@ -992,20 +992,20 @@ export const AdminView: React.FC<Props> = ({
       {activeTab === 'usuarios' && adminData && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white font-serif">{t.tabUsers}</h3>
+            <h3 className="text-base font-bold text-gray-900">{t.tabUsers}</h3>
             <button
               onClick={() => setUserModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-semibold text-xs transition active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 shadow-xs"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>{t.newUser}</span>
             </button>
           </div>
 
-          <div className="rounded-2xl bg-stone-900 border border-stone-800 overflow-hidden">
+          <div className="rounded-xl bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-stone-300">
-                <thead className="bg-stone-950 text-stone-400 uppercase text-[10px] tracking-wider border-b border-stone-800">
+              <table className="w-full text-left text-xs text-gray-700">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                   <tr>
                     <th className="p-3">{t.username}</th>
                     <th className="p-3">{t.fullName}</th>
@@ -1014,18 +1014,18 @@ export const AdminView: React.FC<Props> = ({
                     <th className="p-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60">
+                <tbody className="divide-y divide-gray-200">
                   {adminData.usuarios.map((u) => (
-                    <tr key={u.usuario} className="hover:bg-stone-850">
-                      <td className="p-3 font-mono font-bold text-white">{u.usuario}</td>
+                    <tr key={u.usuario} className="hover:bg-gray-50/80 transition">
+                      <td className="p-3 font-mono font-bold text-gray-900">{u.usuario}</td>
                       <td className="p-3">{u.nombre}</td>
                       <td className="p-3 capitalize">{u.rol}</td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             u.estado === 'activo'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                              : 'bg-stone-800 text-stone-400'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200'
                           }`}
                         >
                           {u.estado}
@@ -1038,14 +1038,14 @@ export const AdminView: React.FC<Props> = ({
                               setTargetUserToChangePass(u.usuario);
                               setPasswordModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition"
+                            className="p-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition shadow-xs"
                             title={t.changePassword}
                           >
                             <KeyRound className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleToggleUserStatus(u)}
-                            className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition"
+                            className="p-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition shadow-xs"
                             title={t.toggleStatus}
                           >
                             <Sliders className="w-3.5 h-3.5" />
@@ -1065,10 +1065,10 @@ export const AdminView: React.FC<Props> = ({
       {activeTab === 'gestiones' && adminData && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white font-serif">{t.editionsTitle}</h3>
+            <h3 className="text-base font-bold text-gray-900">{t.editionsTitle}</h3>
             <button
               onClick={() => setEditionModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-semibold text-xs transition active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{t.newEdition}</span>
@@ -1079,28 +1079,28 @@ export const AdminView: React.FC<Props> = ({
             {adminData.gestiones.map((gest) => (
               <div
                 key={gest.id}
-                className={`p-5 rounded-2xl border transition ${
+                className={`p-5 rounded-xl border transition ${
                   gest.activa
-                    ? 'bg-amber-950/20 border-amber-500/60 shadow-lg shadow-amber-950/30'
-                    : 'bg-stone-900 border-stone-800'
+                    ? 'bg-red-50/50 border-red-300 shadow-xs'
+                    : 'bg-white border-gray-200'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <h4 className="text-base font-bold text-white font-mono">{gest.nombre}</h4>
+                  <h4 className="text-base font-bold text-gray-900 font-mono">{gest.nombre}</h4>
                   {gest.activa ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500 text-stone-950 shadow-sm">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-700 text-white shadow-xs">
                       {t.activeBadge}
                     </span>
                   ) : (
                     <button
                       onClick={() => handleActivateEdition(gest)}
-                      className="px-2.5 py-1 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-[11px] font-semibold transition active:scale-95"
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 text-[11px] font-semibold transition active:scale-95 shadow-xs"
                     >
                       {t.activateEdition}
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-stone-400">
+                <p className="text-xs text-gray-500">
                   {lang === 'de' ? 'Erstellt am:' : 'Creada:'} {gest.fecha_creacion || '2026'}
                 </p>
               </div>
@@ -1111,15 +1111,15 @@ export const AdminView: React.FC<Props> = ({
 
       {/* 9. CONFIGURACIÓN TAB */}
       {activeTab === 'config' && adminData && (
-        <div className="max-w-3xl rounded-3xl bg-stone-900 border border-stone-800 p-6 sm:p-8 shadow-xl">
-          <h3 className="text-base font-bold text-white font-serif mb-6 pb-3 border-b border-stone-800">
+        <div className="max-w-3xl rounded-xl bg-white border border-gray-200 p-6 sm:p-8 shadow-xs">
+          <h3 className="text-base font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
             {t.eventSettingsTitle}
           </h3>
 
           <form onSubmit={handleSaveConfig} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.eventName}
                 </label>
                 <input
@@ -1128,12 +1128,12 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setConfigForm({ ...configForm, NOMBRE_EVENTO: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.whatsappAdmin}
                 </label>
                 <input
@@ -1142,24 +1142,24 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setConfigForm({ ...configForm, WHATSAPP_ADMIN: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.currency}
                 </label>
                 <input
                   type="text"
                   value={configForm.MONEDA}
                   onChange={(e) => setConfigForm({ ...configForm, MONEDA: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.maxGuestsPerStand}
                 </label>
                 <input
@@ -1168,13 +1168,13 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setConfigForm({ ...configForm, MAX_INVITADOS: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 {t.whatsappTemplateEs}
               </label>
               <textarea
@@ -1183,12 +1183,12 @@ export const AdminView: React.FC<Props> = ({
                 onChange={(e) =>
                   setConfigForm({ ...configForm, MENSAJE_WHATSAPP_ES: e.target.value })
                 }
-                className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 {t.whatsappTemplateDe}
               </label>
               <textarea
@@ -1197,7 +1197,7 @@ export const AdminView: React.FC<Props> = ({
                 onChange={(e) =>
                   setConfigForm({ ...configForm, MENSAJE_WHATSAPP_DE: e.target.value })
                 }
-                className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
               />
             </div>
 
@@ -1205,7 +1205,7 @@ export const AdminView: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={savingConfig}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold text-xs shadow-xs transition active:scale-95 disabled:opacity-50"
               >
                 {savingConfig ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1221,15 +1221,15 @@ export const AdminView: React.FC<Props> = ({
 
       {/* MODAL: Stand Editor */}
       {standModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-700 p-6 text-stone-100 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-              <h3 className="text-base font-bold text-white font-serif">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 p-6 text-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-gray-900">
                 {editingStand.id ? t.editStand : t.newStand}
               </h3>
               <button
                 onClick={() => setStandModalOpen(false)}
-                className="text-stone-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1237,7 +1237,7 @@ export const AdminView: React.FC<Props> = ({
 
             <form onSubmit={handleSaveStand} className="mt-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.standNumber} *
                 </label>
                 <input
@@ -1247,12 +1247,12 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setEditingStand({ ...editingStand, numero: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.standCategory} *
                 </label>
                 <select
@@ -1260,7 +1260,7 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setEditingStand({ ...editingStand, categoria: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 >
                   <option value="Comida">{t.categoryComida}</option>
                   <option value="Artesanal">{t.categoryArtesanal}</option>
@@ -1269,7 +1269,7 @@ export const AdminView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.standPrice}
                 </label>
                 <input
@@ -1278,12 +1278,12 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setEditingStand({ ...editingStand, precio: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.standStatus}
                 </label>
                 <select
@@ -1291,7 +1291,7 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setEditingStand({ ...editingStand, estado: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 >
                   <option value="disponible">{t.available}</option>
                   <option value="ocupado">{t.occupied}</option>
@@ -1299,7 +1299,7 @@ export const AdminView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.standDescription}
                 </label>
                 <input
@@ -1309,7 +1309,7 @@ export const AdminView: React.FC<Props> = ({
                     setEditingStand({ ...editingStand, descripcion: e.target.value })
                   }
                   placeholder="Detalles opcionales"
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
@@ -1317,13 +1317,13 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setStandModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-700 text-white text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
                 >
                   {t.save}
                 </button>
@@ -1335,13 +1335,13 @@ export const AdminView: React.FC<Props> = ({
 
       {/* MODAL: User Editor */}
       {userModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-700 p-6 text-stone-100 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-              <h3 className="text-base font-bold text-white font-serif">{t.newUser}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 p-6 text-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-gray-900">{t.newUser}</h3>
               <button
                 onClick={() => setUserModalOpen(false)}
-                className="text-stone-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1349,7 +1349,7 @@ export const AdminView: React.FC<Props> = ({
 
             <form onSubmit={handleCreateUser} className="mt-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.username} *
                 </label>
                 <input
@@ -1359,12 +1359,12 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, usuario: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.fullName} *
                 </label>
                 <input
@@ -1374,12 +1374,12 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, nombre: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.password} *
                 </label>
                 <input
@@ -1389,18 +1389,18 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, password: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.userRole} *
                 </label>
                 <select
                   value={newUserForm.rol}
                   onChange={(e) => setNewUserForm({ ...newUserForm, rol: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 >
                   <option value="admin">{t.roleAdmin}</option>
                   <option value="portero">{t.roleGate}</option>
@@ -1411,13 +1411,13 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setUserModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-700 text-white text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
                 >
                   {t.create}
                 </button>
@@ -1429,15 +1429,15 @@ export const AdminView: React.FC<Props> = ({
 
       {/* MODAL: Change Password */}
       {passwordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-stone-900 border border-stone-700 p-6 text-stone-100 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-              <h3 className="text-base font-bold text-white font-serif">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 p-6 text-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-gray-900">
                 {t.changePassword} ({targetUserToChangePass})
               </h3>
               <button
                 onClick={() => setPasswordModalOpen(false)}
-                className="text-stone-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1445,7 +1445,7 @@ export const AdminView: React.FC<Props> = ({
 
             <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.newPassword} *
                 </label>
                 <input
@@ -1454,7 +1454,7 @@ export const AdminView: React.FC<Props> = ({
                   value={newPasswordValue}
                   onChange={(e) => setNewPasswordValue(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
@@ -1462,13 +1462,13 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setPasswordModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-700 text-white text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
                 >
                   {t.save}
                 </button>
@@ -1480,13 +1480,13 @@ export const AdminView: React.FC<Props> = ({
 
       {/* MODAL: New Edition */}
       {editionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-700 p-6 text-stone-100 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
-              <h3 className="text-base font-bold text-white font-serif">{t.newEdition}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 p-6 text-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+              <h3 className="text-base font-bold text-gray-900">{t.newEdition}</h3>
               <button
                 onClick={() => setEditionModalOpen(false)}
-                className="text-stone-400 hover:text-white"
+                className="text-gray-400 hover:text-gray-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1494,7 +1494,7 @@ export const AdminView: React.FC<Props> = ({
 
             <form onSubmit={handleCreateEdition} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
                   {t.editionName} *
                 </label>
                 <input
@@ -1505,11 +1505,11 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) =>
                     setNewEditionForm({ ...newEditionForm, nombre: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
               </div>
 
-              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-stone-300">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-gray-700">
                 <input
                   type="checkbox"
                   checked={newEditionForm.copiarStands}
@@ -1519,7 +1519,7 @@ export const AdminView: React.FC<Props> = ({
                       copiarStands: e.target.checked,
                     })
                   }
-                  className="mt-0.5 rounded border-stone-700 text-red-700 focus:ring-0"
+                  className="mt-0.5 rounded border-gray-300 text-red-700 focus:ring-0"
                 />
                 <span>{t.copyPreviousStands}</span>
               </label>
@@ -1528,13 +1528,13 @@ export const AdminView: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => setEditionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-red-800 hover:bg-red-700 text-white text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition"
                 >
                   {t.create}
                 </button>

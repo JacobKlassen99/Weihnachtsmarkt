@@ -2,15 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   CheckCircle2,
-  Download,
-  Info,
-  QrCode,
   RefreshCw,
-  Sparkles,
   Store,
   UserCheck,
   UserPlus,
-  Users,
   XCircle,
 } from 'lucide-react';
 import { translations } from '../../i18n/translations';
@@ -92,31 +87,31 @@ export const GuestRegistration: React.FC<Props> = ({
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-3xl bg-stone-900 border border-stone-800 p-6 sm:p-8 shadow-2xl text-stone-100">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-white">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 p-6 sm:p-8 shadow-sm text-gray-900">
         {/* Loading state */}
         {loading && (
           <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto mb-3" />
-            <p className="text-stone-300 text-sm font-semibold">{t.loading}</p>
+            <RefreshCw className="w-8 h-8 text-red-700 animate-spin mx-auto mb-3" />
+            <p className="text-gray-700 text-sm font-semibold">{t.loading}</p>
           </div>
         )}
 
         {/* Error / Invalid Token */}
         {!loading && error && !registeredQR && (
           <div className="text-center py-6">
-            <div className="w-14 h-14 rounded-full bg-red-950 border border-red-800 text-red-400 flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-full bg-red-50 border border-red-200 text-red-700 flex items-center justify-center mx-auto mb-4">
               <XCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2 font-serif">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
               {lang === 'de' ? 'Ungültige Einladung' : 'Invitación No Válida'}
             </h3>
-            <p className="text-xs text-stone-400 mb-6 leading-relaxed">
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
               {error}
             </p>
             <button
               onClick={onBackToHome}
-              className="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition"
+              className="w-full py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold transition"
             >
               {t.back}
             </button>
@@ -126,40 +121,40 @@ export const GuestRegistration: React.FC<Props> = ({
         {/* Already or newly Registered State with QR */}
         {!loading && registeredQR && (
           <div className="text-center py-2">
-            <div className="w-14 h-14 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+            <div className="w-14 h-14 rounded-full bg-green-50 border border-green-200 text-green-700 flex items-center justify-center mx-auto mb-3">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-red-700">
               {t.guestQRTitle}
             </span>
-            <h3 className="text-xl font-black text-white font-serif mt-0.5 mb-1">
+            <h3 className="text-xl font-bold text-gray-900 mt-0.5 mb-1">
               {t.guestSuccessTitle}
             </h3>
-            <p className="text-xs text-stone-300 mb-6 max-w-xs mx-auto">
+            <p className="text-xs text-gray-600 mb-6 max-w-xs mx-auto">
               {t.guestSuccessText}
             </p>
 
             {/* QR Code */}
-            <div className="p-4 bg-white rounded-3xl shadow-2xl border border-stone-200 inline-block mb-4">
+            <div className="p-4 bg-white rounded-2xl shadow-xs border border-gray-200 inline-block mb-4">
               <QRCodeSVG value={registeredQR} size={180} level="H" includeMargin={false} />
             </div>
 
-            <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 mb-6 text-xs text-stone-300 space-y-1">
+            <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 mb-6 text-xs text-gray-700 space-y-1 text-left">
               <div className="flex justify-between">
-                <span className="text-stone-400">{t.guestName}:</span>
-                <span className="font-bold text-white">{registeredName}</span>
+                <span className="text-gray-500">{t.guestName}:</span>
+                <span className="font-bold text-gray-900">{registeredName}</span>
               </div>
               {invitationInfo?.stand && (
                 <div className="flex justify-between">
-                  <span className="text-stone-400">{t.standNumber}:</span>
-                  <span className="font-mono text-amber-400">#{invitationInfo.stand}</span>
+                  <span className="text-gray-500">{t.standNumber}:</span>
+                  <span className="font-mono text-red-700 font-bold">#{invitationInfo.stand}</span>
                 </div>
               )}
             </div>
 
             <button
               onClick={onBackToHome}
-              className="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition"
+              className="w-full py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-semibold transition shadow-sm"
             >
               {t.navHome}
             </button>
@@ -170,35 +165,35 @@ export const GuestRegistration: React.FC<Props> = ({
         {!loading && !error && !registeredQR && invitationInfo?.valida && (
           <div>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-xl bg-red-50 text-red-700 border border-red-100 flex items-center justify-center mx-auto mb-3">
                 <UserPlus className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white font-serif">
+              <h3 className="text-lg font-bold text-gray-900">
                 {t.guestPortalTitle}
               </h3>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 {t.guestPortalSubtitle}
               </p>
             </div>
 
             {/* Stand badge info */}
             {invitationInfo.stand && (
-              <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 mb-5 flex items-center justify-between text-xs">
+              <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 mb-5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <Store className="w-4 h-4 text-amber-400" />
-                  <span className="text-stone-300">
+                  <Store className="w-4 h-4 text-red-700" />
+                  <span className="text-gray-800 font-semibold">
                     {t.standNumber} #{invitationInfo.stand}
                   </span>
                 </div>
                 {invitationInfo.cliente && (
-                  <span className="text-stone-400">{invitationInfo.cliente}</span>
+                  <span className="text-gray-500">{invitationInfo.cliente}</span>
                 )}
               </div>
             )}
 
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   {t.fullName} *
                 </label>
                 <input
@@ -207,14 +202,14 @@ export const GuestRegistration: React.FC<Props> = ({
                   placeholder={t.guestNamePlaceholder}
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500"
+                  className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold text-xs shadow-sm transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

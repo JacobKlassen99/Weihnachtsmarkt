@@ -301,6 +301,17 @@ class BackendService {
       action: 'saveStand',
       token,
       stand,
+      id: stand.id || stand.numero,
+      id_stand: stand.id || stand.numero,
+      numero: stand.numero,
+      categoria: stand.categoria,
+      precio: stand.precio,
+      estado: stand.estado,
+      descripcion: stand.descripcion || '',
+      posicion_x: stand.posicion_x,
+      posicion_y: stand.posicion_y,
+      ancho: stand.ancho,
+      alto: stand.alto,
     });
 
     if (res.ok) {
@@ -319,6 +330,8 @@ class BackendService {
       action: 'confirmarAlquiler',
       token,
       id: solicitudId,
+      id_solicitud: solicitudId,
+      solicitudId: solicitudId,
     });
 
     if (res.ok) {
@@ -337,6 +350,8 @@ class BackendService {
       action: 'rechazarSolicitud',
       token,
       id: solicitudId,
+      id_solicitud: solicitudId,
+      solicitudId: solicitudId,
     });
 
     if (res.ok) {
@@ -355,6 +370,8 @@ class BackendService {
       action: 'cancelarAlquiler',
       token,
       id: alquilerId,
+      id_alquiler: alquilerId,
+      alquilerId: alquilerId,
     });
 
     if (res.ok) {
@@ -373,6 +390,8 @@ class BackendService {
       action: 'revocarInvitado',
       token,
       id: invitadoId,
+      id_invitado: invitadoId,
+      invitadoId: invitadoId,
     });
 
     if (res.ok) {
@@ -390,7 +409,11 @@ class BackendService {
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'crearUsuario',
       token,
-      usuario,
+      usuario: usuario.usuario,
+      nombre: usuario.nombre,
+      password: usuario.password,
+      rol: usuario.rol,
+      user: usuario,
     });
 
     if (res.ok) {
@@ -411,6 +434,8 @@ class BackendService {
       token,
       usuario,
       password: nuevaPassword,
+      nuevaPassword,
+      newPassword: nuevaPassword,
     });
 
     return res;
@@ -427,6 +452,7 @@ class BackendService {
       token,
       usuario,
       estado: nuevoEstado,
+      nuevoEstado,
     });
 
     if (res.ok) {
@@ -445,6 +471,14 @@ class BackendService {
       action: 'setConfig',
       token,
       config,
+      NOMBRE_EVENTO: config.NOMBRE_EVENTO,
+      IDIOMA_PREDETERMINADO: config.IDIOMA_PREDETERMINADO,
+      WHATSAPP_ADMIN: config.WHATSAPP_ADMIN,
+      MONEDA: config.MONEDA,
+      MAX_INVITADOS: config.MAX_INVITADOS,
+      GESTION_ACTIVA: config.GESTION_ACTIVA,
+      MENSAJE_WHATSAPP_ES: config.MENSAJE_WHATSAPP_ES,
+      MENSAJE_WHATSAPP_DE: config.MENSAJE_WHATSAPP_DE,
     });
 
     if (res.ok) {
@@ -464,6 +498,8 @@ class BackendService {
       token,
       nombre: gestion.nombre,
       copiarStands: gestion.copiarStands,
+      copiar_stands: gestion.copiarStands,
+      gestion: gestion.nombre,
     });
 
     if (res.ok) {
@@ -482,6 +518,9 @@ class BackendService {
       action: 'activarGestion',
       token,
       id: idGestion,
+      id_gestion: idGestion,
+      gestion: idGestion,
+      nombre: idGestion,
     });
 
     if (res.ok) {

@@ -1,13 +1,10 @@
 import React from 'react';
 import {
   Calendar,
-  Compass,
-  Globe,
   KeyRound,
   LayoutDashboard,
   LogOut,
   QrCode,
-  ShieldCheck,
   Store,
 } from 'lucide-react';
 import { translations } from '../i18n/translations';
@@ -40,94 +37,87 @@ export const Navbar: React.FC<Props> = ({
   return (
     <>
       {/* Top Header */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-stone-950/85 border-b border-red-900/40 text-stone-100 shadow-lg shadow-black/40">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-200 text-gray-900 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Logo & Event Title */}
+          {/* Logo & Title */}
           <button
             onClick={() => onNavigate('public')}
-            className="flex items-center gap-3 group text-left transition"
+            className="flex items-center gap-2.5 text-left transition group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-700 via-red-800 to-amber-700 p-0.5 shadow-md shadow-red-900/50 group-hover:scale-105 transition">
-              <div className="w-full h-full rounded-[10px] bg-stone-950/40 flex items-center justify-center overflow-hidden">
-                <img src="/icon.svg" alt="Weihnachtsmarkt" className="w-7 h-7 object-contain drop-shadow" />
-              </div>
+            <div className="w-9 h-9 rounded-xl bg-red-700 flex items-center justify-center shadow-xs">
+              <img src="/icon.svg" alt="Weihnachtsmarkt" className="w-6 h-6 object-contain" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-serif font-black tracking-wide text-base sm:text-lg bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
-                  {t.appName}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950 text-red-300 border border-red-800/60">
-                  {gestionActiva}
-                </span>
-              </div>
-              <span className="hidden sm:block text-[11px] text-stone-400 tracking-wider font-light">
+              <span className="font-bold text-base sm:text-lg text-red-700 tracking-tight block leading-tight">
+                {t.appName}
+              </span>
+              <span className="text-[11px] text-gray-500 font-normal hidden sm:block">
                 {t.tagline}
               </span>
             </div>
           </button>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-stone-900/70 p-1.5 rounded-2xl border border-stone-800/80">
+          <nav className="hidden md:flex items-center gap-1.5 bg-gray-50 p-1 rounded-xl border border-gray-200">
             <button
               onClick={() => onNavigate('public')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                 currentView === 'public'
-                  ? 'bg-gradient-to-r from-red-800 to-red-900 text-white shadow-sm border border-red-700/50'
-                  : 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'bg-red-700 text-white shadow-xs'
+                  : 'text-gray-700 hover:text-red-700 hover:bg-white'
               }`}
             >
-              <Store className="w-3.5 h-3.5 text-amber-400" />
+              <Store className="w-3.5 h-3.5" />
               {t.navHome}
             </button>
 
             <button
               onClick={() => onNavigate('client')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                 currentView === 'client'
-                  ? 'bg-gradient-to-r from-red-800 to-red-900 text-white shadow-sm border border-red-700/50'
-                  : 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'bg-red-700 text-white shadow-xs'
+                  : 'text-gray-700 hover:text-red-700 hover:bg-white'
               }`}
             >
-              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+              <KeyRound className="w-3.5 h-3.5" />
               {t.navClient}
             </button>
 
             <button
               onClick={() => onNavigate('porteria')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                 currentView === 'porteria'
-                  ? 'bg-gradient-to-r from-red-800 to-red-900 text-white shadow-sm border border-red-700/50'
-                  : 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'bg-red-700 text-white shadow-xs'
+                  : 'text-gray-700 hover:text-red-700 hover:bg-white'
               }`}
             >
-              <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+              <QrCode className="w-3.5 h-3.5" />
               {t.navGate}
             </button>
 
             <button
               onClick={() => onNavigate('admin')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                 currentView === 'admin'
-                  ? 'bg-gradient-to-r from-red-800 to-red-900 text-white shadow-sm border border-red-700/50'
-                  : 'text-stone-300 hover:text-white hover:bg-stone-800/60'
+                  ? 'bg-red-700 text-white shadow-xs'
+                  : 'text-gray-700 hover:text-red-700 hover:bg-white'
               }`}
             >
-              <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+              <LayoutDashboard className="w-3.5 h-3.5" />
               {t.navAdmin}
             </button>
           </nav>
 
           {/* Action buttons: Language, Install & Logout */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {/* Language Switcher */}
-            <div className="flex items-center bg-stone-900 border border-stone-800 rounded-full p-0.5">
+            <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">
               <button
                 onClick={() => onLangChange('es')}
-                className={`px-2 py-1 rounded-full text-[11px] font-bold transition ${
+                className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
                   lang === 'es'
-                    ? 'bg-red-800 text-white shadow-sm'
-                    : 'text-stone-400 hover:text-stone-200'
+                    ? 'bg-red-700 text-white shadow-xs'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
                 title="Español"
               >
@@ -135,10 +125,10 @@ export const Navbar: React.FC<Props> = ({
               </button>
               <button
                 onClick={() => onLangChange('de')}
-                className={`px-2 py-1 rounded-full text-[11px] font-bold transition ${
+                className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
                   lang === 'de'
-                    ? 'bg-red-800 text-white shadow-sm'
-                    : 'text-stone-400 hover:text-stone-200'
+                    ? 'bg-red-700 text-white shadow-xs'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
                 title="Deutsch"
               >
@@ -153,10 +143,10 @@ export const Navbar: React.FC<Props> = ({
             {adminLoggedIn && currentView === 'admin' && (
               <button
                 onClick={onAdminLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-300 hover:text-red-400 bg-stone-900 hover:bg-red-950/40 border border-stone-800 hover:border-red-800/50 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 hover:text-red-700 bg-gray-100 hover:bg-red-50 border border-gray-200 hover:border-red-200 transition"
                 title={t.logout}
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5 text-red-700" />
                 <span className="hidden sm:inline">{t.logout}</span>
               </button>
             )}
@@ -165,53 +155,53 @@ export const Navbar: React.FC<Props> = ({
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-stone-950/95 backdrop-blur-md border-t border-red-950/60 px-2 py-1 flex items-center justify-around shadow-2xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-sm">
         <button
           onClick={() => onNavigate('public')}
-          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center py-1 px-3 rounded-lg transition ${
             currentView === 'public'
-              ? 'text-amber-400 font-bold'
-              : 'text-stone-400 hover:text-stone-200'
+              ? 'text-red-700 font-bold'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           <Store className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">{t.navHome}</span>
+          <span className="text-[11px]">{t.navHome}</span>
         </button>
 
         <button
           onClick={() => onNavigate('client')}
-          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center py-1 px-3 rounded-lg transition ${
             currentView === 'client'
-              ? 'text-amber-400 font-bold'
-              : 'text-stone-400 hover:text-stone-200'
+              ? 'text-red-700 font-bold'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           <KeyRound className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">{t.navClient}</span>
+          <span className="text-[11px]">{t.navClient}</span>
         </button>
 
         <button
           onClick={() => onNavigate('porteria')}
-          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center py-1 px-3 rounded-lg transition ${
             currentView === 'porteria'
-              ? 'text-emerald-400 font-bold'
-              : 'text-stone-400 hover:text-stone-200'
+              ? 'text-red-700 font-bold'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           <QrCode className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">{t.navGate}</span>
+          <span className="text-[11px]">{t.navGate}</span>
         </button>
 
         <button
           onClick={() => onNavigate('admin')}
-          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center py-1 px-3 rounded-lg transition ${
             currentView === 'admin'
-              ? 'text-amber-400 font-bold'
-              : 'text-stone-400 hover:text-stone-200'
+              ? 'text-red-700 font-bold'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           <LayoutDashboard className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">{t.navAdmin}</span>
+          <span className="text-[11px]">{t.navAdmin}</span>
         </button>
       </nav>
     </>

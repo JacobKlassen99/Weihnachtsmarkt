@@ -22,7 +22,7 @@ export const PWAInstallButton: React.FC<Props> = ({ lang }) => {
     return (
       <button
         onClick={install}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all shadow-md shadow-amber-500/20 active:scale-95"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-700 hover:bg-red-800 text-white transition-all shadow-sm active:scale-95"
         title={textInstall}
       >
         <Download className="w-3.5 h-3.5" />
@@ -36,54 +36,54 @@ export const PWAInstallButton: React.FC<Props> = ({ lang }) => {
       <>
         <button
           onClick={() => setShowIOSGuide(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/40 transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 transition-all active:scale-95 shadow-sm"
           title={textIOS}
         >
-          <Smartphone className="w-3.5 h-3.5" />
+          <Smartphone className="w-3.5 h-3.5 text-red-700" />
           <span>{textIOS}</span>
         </button>
 
         {showIOSGuide && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-sm rounded-2xl bg-stone-900 border border-stone-700 p-6 shadow-2xl text-stone-100 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 p-6 shadow-2xl text-gray-900 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-200">
                 <div className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-base font-bold text-white">
+                  <Smartphone className="w-5 h-5 text-red-700" />
+                  <h3 className="text-base font-bold text-gray-900">
                     {lang === 'de' ? 'Auf iPhone/iPad installieren' : 'Instalar en iPhone / iPad'}
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowIOSGuide(false)}
-                  className="text-stone-400 hover:text-white p-1 rounded-lg"
+                  className="text-gray-400 hover:text-gray-700 p-1 rounded-lg"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="mt-4 space-y-3 text-sm text-stone-300">
-                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-stone-800/60 border border-stone-700/50">
-                  <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-400 font-bold text-xs mt-0.5">
+              <div className="mt-4 space-y-3 text-sm text-gray-700">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                  <div className="p-1.5 bg-red-100 rounded-lg text-red-800 font-bold text-xs mt-0.5">
                     1
                   </div>
                   <div>
                     {lang === 'de' ? (
                       <>
                         Tippen Sie auf das <strong>Teilen-Symbol</strong>{' '}
-                        <Share2 className="w-3.5 h-3.5 inline mx-1 text-sky-400" /> in Safari.
+                        <Share2 className="w-3.5 h-3.5 inline mx-1 text-red-700" /> in Safari.
                       </>
                     ) : (
                       <>
                         Toca el botón <strong>Compartir</strong>{' '}
-                        <Share2 className="w-3.5 h-3.5 inline mx-1 text-sky-400" /> en la barra de
+                        <Share2 className="w-3.5 h-3.5 inline mx-1 text-red-700" /> en la barra de
                         Safari.
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-stone-800/60 border border-stone-700/50">
-                  <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-400 font-bold text-xs mt-0.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                  <div className="p-1.5 bg-red-100 rounded-lg text-red-800 font-bold text-xs mt-0.5">
                     2
                   </div>
                   <div>
@@ -103,7 +103,7 @@ export const PWAInstallButton: React.FC<Props> = ({ lang }) => {
 
               <button
                 onClick={() => setShowIOSGuide(false)}
-                className="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-medium text-sm transition"
+                className="mt-5 w-full py-2.5 rounded-xl bg-red-700 hover:bg-red-800 text-white font-medium text-sm transition shadow-sm"
               >
                 {lang === 'de' ? 'Verstanden' : 'Entendido'}
               </button>

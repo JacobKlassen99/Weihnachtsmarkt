@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  Calendar,
   CheckCircle2,
   Copy,
-  ExternalLink,
   KeyRound,
   MessageCircle,
   Plus,
@@ -13,8 +11,6 @@ import {
   Share2,
   ShieldCheck,
   Store,
-  Tag,
-  UserCheck,
   Users,
 } from 'lucide-react';
 import { translations } from '../../i18n/translations';
@@ -116,34 +112,30 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/80 border border-red-800/60 text-amber-300 text-xs font-semibold mb-3">
-          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-          <span>{t.clientPortalTitle}</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white font-serif">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-red-700 tracking-tight">
           {t.clientPortalTitle}
         </h1>
-        <p className="text-xs sm:text-sm text-stone-400 mt-1 max-w-xl">
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
           {t.clientPortalSubtitle}
         </p>
       </div>
 
       {/* Token Input Bar if no active rental yet */}
       {!rentalData && (
-        <div className="max-w-md mx-auto p-6 sm:p-8 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl text-center">
-          <div className="w-12 h-12 rounded-2xl bg-red-950 border border-red-800/60 text-red-400 flex items-center justify-center mx-auto mb-4">
+        <div className="max-w-md mx-auto p-6 sm:p-8 rounded-2xl bg-white border border-gray-200 shadow-sm text-center">
+          <div className="w-12 h-12 rounded-xl bg-red-50 text-red-700 flex items-center justify-center mx-auto mb-4 border border-red-100">
             <KeyRound className="w-6 h-6" />
           </div>
-          <h3 className="text-base sm:text-lg font-bold text-white mb-2">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">
             {t.accessPortal}
           </h3>
-          <p className="text-xs text-stone-400 mb-6 leading-relaxed">
+          <p className="text-xs text-gray-500 mb-6 leading-relaxed">
             {t.enterTokenInstructions}
           </p>
 
           {error && (
-            <div className="p-3 mb-4 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs">
+            <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
               {error}
             </div>
           )}
@@ -155,12 +147,12 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
               placeholder={t.tokenPlaceholder}
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500 font-mono"
+              className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 font-mono"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-xl bg-red-800 hover:bg-red-700 text-white font-semibold text-xs shadow-md transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -177,63 +169,62 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
 
       {/* Active Rental Content */}
       {rentalData && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Top Banner: Stand Info & Entry QR */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Stand Info Card */}
-            <div className="lg:col-span-2 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 shadow-xl flex flex-col justify-between">
+            <div className="lg:col-span-2 p-6 sm:p-8 rounded-2xl bg-white border border-gray-200 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-700">
                       {t.yourStand}
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-white font-serif mt-0.5">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-0.5">
                       Stand #{rentalData.alquiler?.stand}
                     </h2>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-800/60">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-200">
                     {rentalData.alquiler?.estado || t.active}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-xs">
-                  <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800/80">
-                    <span className="text-stone-400 block mb-1">{t.clientName}</span>
-                    <span className="text-white font-bold text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6 text-xs">
+                  <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+                    <span className="text-gray-500 block mb-1">{t.clientName}</span>
+                    <span className="text-gray-900 font-bold text-sm">
                       {rentalData.alquiler?.cliente}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800/80">
-                    <span className="text-stone-400 block mb-1">{t.phone}</span>
-                    <span className="text-white font-bold text-sm font-mono">
+                  <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+                    <span className="text-gray-500 block mb-1">{t.phone}</span>
+                    <span className="text-gray-900 font-bold text-sm font-mono">
                       {rentalData.alquiler?.telefono}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800/80">
-                    <span className="text-stone-400 block mb-1">{t.eventEdition}</span>
-                    <span className="text-white font-semibold">
-                      {rentalData.alquiler?.gestion || 'Weihnachtsmarkt'}
+                  <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+                    <span className="text-gray-500 block mb-1">{t.standCategory}</span>
+                    <span className="text-gray-800 font-semibold">
+                      {rentalData.alquiler?.categoria || rentalData.stand_info?.categoria || 'General'}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800/80">
-                    <span className="text-stone-400 block mb-1">{t.standCategory}</span>
-                    <span className="text-amber-300 font-semibold">
-                      {rentalData.alquiler?.categoria || rentalData.stand_info?.categoria || 'General'}
+                  <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+                    <span className="text-gray-500 block mb-1">{t.rentalDate}</span>
+                    <span className="text-gray-800 font-semibold">
+                      {rentalData.alquiler?.fecha_alquiler || 'Confirmado'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
-                <span>{t.dates}: 2026</span>
+              <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
                 <button
                   onClick={() => fetchRental(activeToken)}
                   disabled={loading}
-                  className="flex items-center gap-1.5 text-stone-300 hover:text-white"
+                  className="flex items-center gap-1.5 text-gray-700 hover:text-red-700 font-medium"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                   <span>{t.refreshData}</span>
@@ -242,17 +233,17 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
             </div>
 
             {/* Personal Access QR Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-red-950/80 via-stone-900 to-stone-950 border border-red-900/50 shadow-xl text-center flex flex-col items-center justify-center">
-              <div className="flex items-center gap-1.5 text-amber-300 font-bold text-xs uppercase tracking-wider mb-2">
+            <div className="p-6 sm:p-8 rounded-2xl bg-white border border-gray-200 shadow-sm text-center flex flex-col items-center justify-center">
+              <div className="flex items-center gap-1.5 text-red-700 font-bold text-xs uppercase tracking-wider mb-2">
                 <ShieldCheck className="w-4 h-4" />
                 <span>{t.personalQRTitle}</span>
               </div>
-              <p className="text-[11px] text-stone-300 mb-4 max-w-xs">
+              <p className="text-xs text-gray-600 mb-4 max-w-xs">
                 {t.personalQRInstructions}
               </p>
 
               {/* QR Code */}
-              <div className="p-3 bg-white rounded-2xl shadow-xl border border-stone-200 inline-block mb-4">
+              <div className="p-3 bg-white rounded-xl shadow-xs border border-gray-200 inline-block mb-3">
                 <QRCodeSVG
                   value={rentalData.qr_acceso || rentalData.alquiler?.qr_cliente || activeToken}
                   size={150}
@@ -261,31 +252,31 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
                 />
               </div>
 
-              <span className="text-[11px] font-mono text-stone-400 bg-stone-950 px-3 py-1 rounded-full border border-stone-800">
-                Pase Titular: #{rentalData.alquiler?.stand}
+              <span className="text-xs font-mono text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+                Pase Titular • Stand #{rentalData.alquiler?.stand}
               </span>
             </div>
           </div>
 
           {/* Invitations Section */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-stone-800">
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-gray-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
               <div>
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-lg sm:text-xl font-bold text-white font-serif">
+                  <Users className="w-5 h-5 text-red-700" />
+                  <h3 className="text-lg font-bold text-gray-900">
                     {t.invitationsTitle}
                   </h3>
                 </div>
-                <p className="text-xs text-stone-400 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   {t.invitationsSubtitle}
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <span className="text-xs text-stone-400 block">{t.invitationsCount}</span>
-                  <span className="text-sm font-bold text-amber-400 font-mono">
+                  <span className="text-xs text-gray-500 block">{t.invitationsCount}</span>
+                  <span className="text-sm font-bold text-gray-900 font-mono">
                     {invitaciones.length} / {maxInvitados}
                   </span>
                 </div>
@@ -293,7 +284,7 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
                 <button
                   onClick={handleCreateInvitation}
                   disabled={remainingInvites <= 0 || creatingInvite}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs shadow-sm transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {creatingInvite ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -306,7 +297,7 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
             </div>
 
             {inviteError && (
-              <div className="p-3 mb-4 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs">
+              <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
                 {inviteError}
               </div>
             )}
@@ -321,18 +312,18 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
                   return (
                     <div
                       key={inv.id || inv.token_invitacion || idx}
-                      className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800/80 flex flex-col justify-between"
+                      className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-xs font-bold text-amber-400 font-mono">
+                          <span className="text-xs font-bold text-gray-900 font-mono">
                             Pase #{idx + 1}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                               isRegistered
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                                : 'bg-amber-950 text-amber-300 border border-amber-800/50'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {isRegistered ? t.confirmed : t.pending}
@@ -340,19 +331,19 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
                         </div>
 
                         <div className="mb-3">
-                          <span className="text-[11px] text-stone-400 block">
+                          <span className="text-xs text-gray-500 block">
                             {t.guestName}:
                           </span>
-                          <span className="text-xs font-semibold text-white">
+                          <span className="text-xs font-semibold text-gray-900">
                             {inv.nombre_invitado || t.notRegisteredYet}
                           </span>
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between gap-2">
+                      <div className="pt-3 border-t border-gray-200 flex items-center justify-between gap-2">
                         <button
                           onClick={() => copyToClipboard(inviteUrl, inv.token_invitacion)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs border border-stone-800 transition active:scale-95"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 text-xs border border-gray-300 transition active:scale-95 shadow-xs"
                         >
                           <Copy className="w-3.5 h-3.5" />
                           <span>
@@ -362,7 +353,7 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
 
                         <button
                           onClick={() => shareViaWhatsApp(inv)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-900/60 hover:bg-emerald-800/80 text-emerald-200 text-xs border border-emerald-700/50 transition active:scale-95"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs transition active:scale-95 shadow-xs"
                         >
                           <Share2 className="w-3.5 h-3.5" />
                           <span>WhatsApp</span>
@@ -373,7 +364,7 @@ export const ClientPortal: React.FC<Props> = ({ initialToken = '', lang }) => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-10 text-stone-500 text-xs">
+              <div className="text-center py-10 text-gray-500 text-xs">
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>{lang === 'de' ? 'Noch keine Einladungen erstellt.' : 'Aún no has generado pases de invitado.'}</p>
                 <p className="mt-1">

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
-  AlertCircle,
   Camera,
   CheckCircle2,
   Clock,
@@ -11,9 +10,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   StopCircle,
-  User,
-  Users,
-  Volume2,
   XCircle,
 } from 'lucide-react';
 import { translations } from '../../i18n/translations';
@@ -179,33 +175,29 @@ export const PorteriaView: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-28">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-28 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 text-xs font-semibold mb-2">
-          <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-          <span>{t.gateTitle}</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white font-serif">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-red-700 tracking-tight">
           {t.gateTitle}
         </h1>
-        <p className="text-xs sm:text-sm text-stone-400 mt-0.5">
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
           {t.gateSubtitle}
         </p>
       </div>
 
       {/* Auth Warning if not logged in */}
       {!sessionToken && (
-        <div className="p-4 mb-6 rounded-2xl bg-amber-950/70 border border-amber-800/80 flex items-center justify-between gap-4">
+        <div className="p-4 mb-6 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <KeyRound className="w-5 h-5 text-amber-400 shrink-0" />
-            <span className="text-xs text-amber-200">
+            <KeyRound className="w-5 h-5 text-amber-700 shrink-0" />
+            <span className="text-xs text-amber-900 font-medium">
               {t.gateLoginRequired}
             </span>
           </div>
           <button
             onClick={onRequireLogin}
-            className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition active:scale-95 shrink-0"
+            className="px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold transition active:scale-95 shrink-0 shadow-xs"
           >
             {t.loginButton}
           </button>
@@ -215,48 +207,48 @@ export const PorteriaView: React.FC<Props> = ({
       {/* Big Scanner Feedback Banner */}
       {lastScanResult && (
         <div
-          className={`p-6 mb-6 rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200 ${
+          className={`p-6 mb-6 rounded-2xl border shadow-sm animate-in zoom-in-95 duration-200 ${
             lastScanResult.ok
-              ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-100 shadow-emerald-950/60'
-              : 'bg-red-950/90 border-red-500/80 text-red-100 shadow-red-950/60'
+              ? 'bg-green-50 border-green-300 text-green-950'
+              : 'bg-red-50 border-red-300 text-red-950'
           }`}
         >
           <div className="flex items-start gap-4">
             <div
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-                lastScanResult.ok ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                lastScanResult.ok ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
               }`}
             >
               {lastScanResult.ok ? (
-                <ShieldCheck className="w-9 h-9" />
+                <ShieldCheck className="w-7 h-7" />
               ) : (
-                <ShieldAlert className="w-9 h-9" />
+                <ShieldAlert className="w-7 h-7" />
               )}
             </div>
 
             <div className="flex-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider opacity-90 block">
+              <span className="text-xs font-bold uppercase tracking-wider block opacity-80">
                 {lastScanResult.ok ? t.accessAuthorized : t.accessDenied}
               </span>
-              <h2 className="text-2xl font-black font-serif mt-0.5">
+              <h2 className="text-xl font-extrabold mt-0.5">
                 {lastScanResult.nombre || (lastScanResult.ok ? 'Acceso Válido' : 'Denegado')}
               </h2>
 
               {lastScanResult.ok ? (
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-emerald-900/60 border border-emerald-700/50">
-                    <span className="opacity-75 block text-[10px]">{t.standNumber}:</span>
-                    <span className="font-bold text-sm">#{lastScanResult.stand}</span>
+                  <div className="p-2.5 rounded-lg bg-white border border-green-200">
+                    <span className="text-gray-500 block text-[10px]">{t.standNumber}:</span>
+                    <span className="font-bold text-sm text-gray-900">#{lastScanResult.stand}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-900/60 border border-emerald-700/50">
-                    <span className="opacity-75 block text-[10px]">{t.actions}:</span>
-                    <span className="font-bold text-sm capitalize">
+                  <div className="p-2.5 rounded-lg bg-white border border-green-200">
+                    <span className="text-gray-500 block text-[10px]">{t.actions}:</span>
+                    <span className="font-bold text-sm text-gray-900 capitalize">
                       {lastScanResult.tipo === 'cliente' ? t.typeClient : t.typeGuest}
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="mt-2 text-xs text-red-200 bg-red-900/50 p-2.5 rounded-xl border border-red-800">
+                <p className="mt-2 text-xs text-red-700 bg-white p-2.5 rounded-lg border border-red-200">
                   {lastScanResult.error || 'Código QR no reconocido o inactivo'}
                 </p>
               )}
@@ -266,11 +258,11 @@ export const PorteriaView: React.FC<Props> = ({
       )}
 
       {/* Camera Live Preview & Controls */}
-      <div className="p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl mb-6">
+      <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm mb-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <Camera className="w-5 h-5 text-amber-400" />
-            <h3 className="text-base font-bold text-white font-serif">
+            <Camera className="w-5 h-5 text-red-700" />
+            <h3 className="text-base font-bold text-gray-900">
               {lang === 'de' ? 'Kamera-Scanner' : 'Escáner de Cámara'}
             </h3>
           </div>
@@ -280,7 +272,7 @@ export const PorteriaView: React.FC<Props> = ({
               <button
                 onClick={startScanner}
                 disabled={!sessionToken || processing}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-bold text-xs shadow-xs transition active:scale-95 disabled:opacity-50"
               >
                 <Camera className="w-4 h-4" />
                 <span>{t.cameraPermission}</span>
@@ -288,7 +280,7 @@ export const PorteriaView: React.FC<Props> = ({
             ) : (
               <button
                 onClick={stopScanner}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-800 hover:bg-red-700 text-white font-bold text-xs shadow-md transition active:scale-95"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-800 text-white font-bold text-xs shadow-xs transition active:scale-95"
               >
                 <StopCircle className="w-4 h-4" />
                 <span>{t.stopCamera}</span>
@@ -298,42 +290,42 @@ export const PorteriaView: React.FC<Props> = ({
         </div>
 
         {cameraError && (
-          <div className="p-3 mb-4 rounded-xl bg-red-950/80 border border-red-800/80 text-red-200 text-xs">
+          <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
             {cameraError}
           </div>
         )}
 
-        {/* Video / Html5Qrcode Mount Point */}
+        {/* Video Mount Point */}
         <div
           id="qr-reader-container"
-          className={`w-full overflow-hidden rounded-2xl bg-black border border-stone-800 transition ${
+          className={`w-full overflow-hidden rounded-xl bg-black border border-gray-300 transition ${
             scanning ? 'min-h-[280px]' : 'hidden'
           }`}
         />
 
         {!scanning && (
-          <div className="text-center py-10 rounded-2xl bg-stone-950/60 border border-dashed border-stone-800">
-            <QrCode className="w-12 h-12 text-stone-600 mx-auto mb-2" />
-            <p className="text-xs text-stone-400 max-w-xs mx-auto">
+          <div className="text-center py-10 rounded-xl bg-gray-50 border border-dashed border-gray-300">
+            <QrCode className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+            <p className="text-xs text-gray-600 max-w-xs mx-auto">
               {t.scanningInstruction}
             </p>
           </div>
         )}
 
         {/* Manual Code Entry */}
-        <div className="mt-6 pt-5 border-t border-stone-800">
+        <div className="mt-5 pt-4 border-t border-gray-200">
           <form onSubmit={handleManualSubmit} className="flex gap-2">
             <input
               type="text"
               placeholder={t.manualCodePlaceholder}
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500 font-mono"
+              className="flex-1 px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 font-mono"
             />
             <button
               type="submit"
               disabled={!sessionToken || processing || !manualCode.trim()}
-              className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs border border-stone-700 transition active:scale-95 disabled:opacity-50"
+              className="px-4 py-2.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 disabled:opacity-50 shadow-xs"
             >
               {processing ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -347,10 +339,10 @@ export const PorteriaView: React.FC<Props> = ({
 
       {/* Recent Scans Session Log */}
       {scanHistory.length > 0 && (
-        <div className="p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl">
+        <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-white font-serif">
+            <Clock className="w-4 h-4 text-red-700" />
+            <h3 className="text-sm font-bold text-gray-900">
               {t.recentScansTitle}
             </h3>
           </div>
@@ -359,31 +351,31 @@ export const PorteriaView: React.FC<Props> = ({
             {scanHistory.map((scan, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                className={`p-3 rounded-lg border flex items-center justify-between text-xs ${
                   scan.ok
-                    ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-200'
-                    : 'bg-red-950/40 border-red-800/40 text-red-200'
+                    ? 'bg-green-50/60 border-green-200 text-green-950'
+                    : 'bg-red-50/60 border-red-200 text-red-950'
                 }`}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {scan.ok ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                   ) : (
-                    <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <XCircle className="w-4 h-4 text-red-600 shrink-0" />
                   )}
                   <div>
-                    <span className="font-bold text-white block">
+                    <span className="font-bold text-gray-900 block">
                       {scan.nombre || (scan.ok ? 'Acceso Válido' : 'Acceso Denegado')}
                     </span>
                     {scan.stand && (
-                      <span className="text-[11px] opacity-80">
+                      <span className="text-[11px] text-gray-600">
                         Stand #{scan.stand} • {scan.tipo}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <span className="text-[10px] font-mono opacity-60">
+                <span className="text-[11px] font-mono text-gray-500">
                   {scan.fecha_hora}
                 </span>
               </div>
