@@ -1,0 +1,494 @@
+import {
+  AdminData,
+  Configuracion,
+  InvitacionInfo,
+  MiAlquilerData,
+  PublicData,
+  ScanResult,
+  Stand,
+  Usuario,
+} from '../types';
+
+export const BACKEND_URL =
+  'https://script.google.com/macros/s/AKfycbzPYXuXu8FSvtmRVaDywv8OxsDZZX45WfxpNBoPmdF29cnezThtfv2bxRxoELdTjUSz/exec';
+
+// Temporal in-memory cache
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+class BackendService {
+  private cache = new Map<string, CacheEntry<unknown>>();
+  private readonly CACHE_TTL_MS = 30000; // 30 seconds cache
+
+  private getCached<T>(key: string): T | null {
+    const entry = this.cache.get(key) as CacheEntry<T> | undefined;
+    if (!entry) return null;
+    const now = Date.now();
+    if (now - entry.timestamp > this.CACHE_TTL_MS) {
+      this.cache.delete(key);
+      return null;
+    }
+    return entry.data;
+  }
+
+  private setCache<T>(key: string, data: T): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+    });
+  }
+
+  public invalidateCache(prefix?: string): void {
+    if (!prefix) {
+      this.cache.clear();
+      return;
+    }
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Helper to execute a POST request to Google Apps Script using text/plain
+   * to avoid browser CORS preflight issues while allowing GAS to parse e.postData.contents
+   */
+  private async postRequest<T>(payload: Record<string, unknown>): Promise<T> {
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en el servidor (${response.status})`);
+      }
+
+      const text = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      return data as T;
+    } catch (err: any) {
+      console.error(`Error en acción ${payload.action}:`, err);
+      throw err;
+    }
+  }
+
+  // 1. PUBLIC AREA: Obtener stands y configuración del evento
+  public async getPublicData(forceRefresh = false): Promise<PublicData> {
+    const cacheKey = 'public_data';
+    if (!forceRefresh) {
+      const cached = this.getCached<PublicData>(cacheKey);
+      if (cached) return cached;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}?action=public`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar datos públicos (${response.status})`);
+      }
+
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(result.error || 'No se pudieron cargar los datos del evento');
+      }
+
+      const publicData: PublicData = {
+        configuracion: result.data?.configuracion || {
+          NOMBRE_EVENTO: 'Weihnachtsmarkt',
+          IDIOMA_PREDETERMINADO: 'es',
+          WHATSAPP_ADMIN: '75593587',
+          MONEDA: '$us',
+          MAX_INVITADOS: '5',
+          GESTION_ACTIVA: 'GES-2026',
+          MENSAJE_WHATSAPP_ES:
+            'Hola, soy {NOMBRE}. Solicité el Stand {STAND} de la categoría {CATEGORIA} para el Weihnachtsmarkt.',
+          MENSAJE_WHATSAPP_DE:
+            'Hallo, ich bin {NOMBRE}. Ich habe Stand {STAND} in der Kategorie {CATEGORIA} für den Weihnachtsmarkt angefragt.',
+        },
+        stands: Array.isArray(result.data?.stands) ? result.data.stands : [],
+      };
+
+      this.setCache(cacheKey, publicData);
+      return publicData;
+    } catch (err: any) {
+      // If network fails, check if we have any cached data even if expired
+      const stale = this.cache.get(cacheKey) as CacheEntry<PublicData> | undefined;
+      if (stale) return stale.data;
+      throw err;
+    }
+  }
+
+  // 2. SOLICITUD DE ALQUILER
+  public async submitSolicitud(params: {
+    stand: string | number;
+    categoria: string;
+    nombre: string;
+    telefono: string;
+  }): Promise<{ ok: boolean; error?: string; mensaje?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string; mensaje?: string }>({
+      action: 'solicitud',
+      stand: params.stand,
+      categoria: params.categoria,
+      nombre: params.nombre,
+      telefono: params.telefono,
+    });
+
+    if (res.ok) {
+      this.invalidateCache('public_data');
+      this.invalidateCache('admin_data');
+    }
+
+    return res;
+  }
+
+  // 3. ÁREA PRIVADA DEL CLIENTE: miAlquiler
+  public async getMiAlquiler(token: string): Promise<MiAlquilerData> {
+    const res = await this.postRequest<{ ok: boolean; data?: any; error?: string }>({
+      action: 'miAlquiler',
+      token,
+    });
+
+    if (!res.ok) {
+      throw new Error(res.error || 'Enlace de cliente inválido');
+    }
+
+    return res.data;
+  }
+
+  // 4. CREAR INVITACIÓN (desde área del cliente)
+  public async crearInvitacion(
+    tokenCliente: string,
+    nombreSugerido?: string
+  ): Promise<{ ok: boolean; token_invitacion?: string; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; token_invitacion?: string; error?: string }>({
+      action: 'crearInvitacion',
+      token: tokenCliente,
+      nombre: nombreSugerido,
+    });
+
+    if (res.ok) {
+      this.invalidateCache('admin_data');
+    }
+
+    return res;
+  }
+
+  // 5. INVITADO: Consultar invitación
+  public async consultarInvitacion(tokenInvitacion: string): Promise<InvitacionInfo> {
+    const res = await this.postRequest<{ ok: boolean; data?: any; error?: string }>({
+      action: 'consultarInvitacion',
+      token: tokenInvitacion,
+    });
+
+    if (!res.ok) {
+      return {
+        valida: false,
+        error: res.error || 'Invitación no disponible',
+      };
+    }
+
+    return {
+      valida: true,
+      ...res.data,
+    };
+  }
+
+  // 6. INVITADO: Registrar invitado
+  public async registrarInvitado(
+    tokenInvitacion: string,
+    nombreCompleto: string
+  ): Promise<{ ok: boolean; error?: string; qr_acceso?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string; qr_acceso?: string }>({
+      action: 'registrarInvitado',
+      token: tokenInvitacion,
+      nombre: nombreCompleto,
+    });
+
+    if (res.ok) {
+      this.invalidateCache('admin_data');
+    }
+
+    return res;
+  }
+
+  // 7. LOGIN (Administrador y Portero)
+  public async login(
+    usuario: string,
+    password: string
+  ): Promise<{ ok: boolean; token?: string; usuario?: Usuario; error?: string }> {
+    const res = await this.postRequest<{
+      ok: boolean;
+      token?: string;
+      usuario?: Usuario;
+      error?: string;
+    }>({
+      action: 'login',
+      usuario,
+      password,
+    });
+
+    return res;
+  }
+
+  // 8. ADMIN DATA (Obtener todos los datos administrativos)
+  public async getAdminData(token: string, forceRefresh = false): Promise<AdminData> {
+    const cacheKey = `admin_data_${token.slice(0, 10)}`;
+    if (!forceRefresh) {
+      const cached = this.getCached<AdminData>(cacheKey);
+      if (cached) return cached;
+    }
+
+    const res = await this.postRequest<{ ok: boolean; data?: any; error?: string }>({
+      action: 'adminData',
+      token,
+    });
+
+    if (!res.ok) {
+      throw new Error(res.error || 'Sesión expirada o no autorizada');
+    }
+
+    const adminData: AdminData = {
+      configuracion: res.data?.configuracion || {},
+      stands: Array.isArray(res.data?.stands) ? res.data.stands : [],
+      solicitudes: Array.isArray(res.data?.solicitudes) ? res.data.solicitudes : [],
+      alquileres: Array.isArray(res.data?.alquileres) ? res.data.alquileres : [],
+      invitados: Array.isArray(res.data?.invitados) ? res.data.invitados : [],
+      accesos: Array.isArray(res.data?.accesos) ? res.data.accesos : [],
+      usuarios: Array.isArray(res.data?.usuarios) ? res.data.usuarios : [],
+      gestiones: Array.isArray(res.data?.gestiones) ? res.data.gestiones : [],
+    };
+
+    this.setCache(cacheKey, adminData);
+    return adminData;
+  }
+
+  // 9. GUARDAR STAND (Crear o editar)
+  public async saveStand(
+    token: string,
+    stand: Partial<Stand>
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'saveStand',
+      token,
+      stand,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 10. CONFIRMAR ALQUILER (Desde solicitud)
+  public async confirmarAlquiler(
+    token: string,
+    solicitudId: string
+  ): Promise<{ ok: boolean; token_cliente?: string; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; token_cliente?: string; error?: string }>({
+      action: 'confirmarAlquiler',
+      token,
+      id: solicitudId,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 11. RECHAZAR SOLICITUD
+  public async rechazarSolicitud(
+    token: string,
+    solicitudId: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'rechazarSolicitud',
+      token,
+      id: solicitudId,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 12. CANCELAR ALQUILER
+  public async cancelarAlquiler(
+    token: string,
+    alquilerId: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'cancelarAlquiler',
+      token,
+      id: alquilerId,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 13. REVOCAR INVITADO
+  public async revocarInvitado(
+    token: string,
+    invitadoId: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'revocarInvitado',
+      token,
+      id: invitadoId,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 14. CREAR USUARIO
+  public async crearUsuario(
+    token: string,
+    usuario: { usuario: string; nombre: string; password: string; rol: string }
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'crearUsuario',
+      token,
+      usuario,
+    });
+
+    if (res.ok) {
+      this.invalidateCache('admin_data');
+    }
+
+    return res;
+  }
+
+  // 15. CAMBIAR PASSWORD
+  public async cambiarPassword(
+    token: string,
+    usuario: string,
+    nuevaPassword: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'cambiarPassword',
+      token,
+      usuario,
+      password: nuevaPassword,
+    });
+
+    return res;
+  }
+
+  // 16. CAMBIAR ESTADO USUARIO (activo / inactivo)
+  public async cambiarEstadoUsuario(
+    token: string,
+    usuario: string,
+    nuevoEstado: 'activo' | 'inactivo'
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'cambiarEstadoUsuario',
+      token,
+      usuario,
+      estado: nuevoEstado,
+    });
+
+    if (res.ok) {
+      this.invalidateCache('admin_data');
+    }
+
+    return res;
+  }
+
+  // 17. GUARDAR CONFIGURACIÓN
+  public async setConfig(
+    token: string,
+    config: Partial<Configuracion>
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'setConfig',
+      token,
+      config,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 18. NUEVA GESTIÓN ANUAL
+  public async nuevaGestion(
+    token: string,
+    gestion: { nombre: string; copiarStands: boolean }
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'nuevaGestion',
+      token,
+      nombre: gestion.nombre,
+      copiarStands: gestion.copiarStands,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 19. ACTIVAR GESTIÓN
+  public async activarGestion(
+    token: string,
+    idGestion: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+      action: 'activarGestion',
+      token,
+      id: idGestion,
+    });
+
+    if (res.ok) {
+      this.invalidateCache();
+    }
+
+    return res;
+  }
+
+  // 20. SCAN PORTERÍA
+  public async scan(token: string, qr: string): Promise<ScanResult> {
+    const res = await this.postRequest<ScanResult>({
+      action: 'scan',
+      token,
+      qr,
+    });
+
+    // Invalidate access log cache
+    this.invalidateCache('admin_data');
+
+    return res;
+  }
+}
+
+export const backendService = new BackendService();
