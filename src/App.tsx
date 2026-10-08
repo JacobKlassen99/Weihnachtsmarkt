@@ -162,10 +162,11 @@ export default function App() {
       }
     } catch (err: any) {
       console.error('Error fetching public data:', err);
+      const detail = err?.message ? ` (${err.message})` : '';
       setNetworkError(
         lang === 'de'
-          ? 'Verbindung zum Weihnachtsmarkt-Server fehlgeschlagen. Bitte Internet prüfen.'
-          : 'Error de conexión con el servidor del Weihnachtsmarkt. Verifica tu conexión.'
+          ? `Verbindung zum Weihnachtsmarkt-Server fehlgeschlagen.${detail}`
+          : `Error de conexión con el servidor del Weihnachtsmarkt.${detail}`
       );
     } finally {
       setLoadingPublic(false);

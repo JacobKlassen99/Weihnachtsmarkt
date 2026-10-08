@@ -109,18 +109,19 @@ export const AdminView: React.FC<Props> = ({
     usuario: '',
     nombre: '',
     password: '',
-    rol: 'admin',
+    rol: 'ADMIN',
   });
 
   // Password Modal
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [targetUserToChangePass, setTargetUserToChangePass] = useState('');
+  const [targetUserIdToChangePass, setTargetUserIdToChangePass] = useState('');
   const [newPasswordValue, setNewPasswordValue] = useState('');
 
-  // New Edition Modal
+  // New Edition Modal (Anio: 2026-2100)
   const [editionModalOpen, setEditionModalOpen] = useState(false);
   const [newEditionForm, setNewEditionForm] = useState({
-    nombre: '',
+    anio: 2027,
     copiarStands: true,
   });
 
@@ -144,6 +145,13 @@ export const AdminView: React.FC<Props> = ({
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Modal error states
+  const [standModalError, setStandModalError] = useState<string | null>(null);
+  const [userModalError, setUserModalError] = useState<string | null>(null);
+  const [passwordModalError, setPasswordModalError] = useState<string | null>(null);
+  const [editionModalError, setEditionModalError] = useState<string | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
+
   // Get active session token reliably
   const getActiveToken = (): string => {
     return (
@@ -152,6 +160,20 @@ export const AdminView: React.FC<Props> = ({
       localStorage.getItem('weihnachtsmarkt_admin_token') ||
       ''
     );
+  };
+
+  const handleSessionExpired = (message?: string) => {
+    const expiredMsg =
+      message ||
+      (lang === 'de'
+        ? 'Ihre Sitzung ist abgelaufen oder ungültig. Bitte melden Sie sich erneut als Administrator an.'
+        : 'Tu sesión ha expirado o no es válida. Por favor vuelve a iniciar sesión como administrador.');
+    showFeedback(expiredMsg, 'error');
+    setStandModalOpen(false);
+    setUserModalOpen(false);
+    setPasswordModalOpen(false);
+    setEditionModalOpen(false);
+    onLogout();
   };
 
   // Load Admin Data
@@ -166,7 +188,8 @@ export const AdminView: React.FC<Props> = ({
       }
     } catch (err: any) {
       if (err.message?.includes('Sesion expirada') || err.message?.includes('expirada')) {
-        onLogout();
+        handleSessionExpired(err.message);
+        return;
       }
       setDataError(err.message || 'Error al cargar datos administrativos');
     } finally {
@@ -215,7 +238,7 @@ export const AdminView: React.FC<Props> = ({
       };
 
       onLoginSuccess(token, user);
-      loadAdminData(token);
+      loadAdminData(token, true);
     } catch (err: any) {
       // Display the REAL error message without revealing passwords or tokens
       setLoginError(err.message || (lang === 'de' ? 'Verbindungsfehler zum Server' : 'Error de conexión con el servidor'));
@@ -226,35 +249,89 @@ export const AdminView: React.FC<Props> = ({
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setActionMessage({ text, type });
-    setTimeout(() => setActionMessage(null), type === 'error' ? 6000 : 3500);
+    setTimeout(() => setActionMessage(null), type === 'error' ? 7000 : 4000);
   };
 
   // Actions
   const handleSaveStand = async (e: React.FormEvent) => {
     e.preventDefault();
+    setStandModalError(null);
+
     const token = getActiveToken();
     if (!token) {
-      showFeedback('No hay sesión de administrador activa. Por favor inicia sesión.', 'error');
+      handleSessionExpired('No hay sesión de administrador activa. Por favor inicia sesión.');
       return;
     }
-    if (!editingStand.numero) {
-      showFeedback('El número de stand es obligatorio', 'error');
+
+    const standNum = String(editingStand.Numero || editingStand.numero || '').trim();
+    if (!standNum) {
+      setStandModalError(lang === 'de' ? 'Standnummer ist erforderlich' : 'El número de stand es obligatorio');
+      return;
+    }
+
+    // Check duplicate stand number when creating a new stand
+    const standId = editingStand.StandID || editingStand.id;
+    const isNewStand = !standId;
+    if (isNewStand && adminData?.stands?.some((s) => String(s.Numero || s.numero).trim() === standNum)) {
+      setStandModalError(
+        lang === 'de'
+          ? `Ein Stand mit der Nummer #${standNum} existiert bereits`
+          : `Ya existe un stand con el número #${standNum}`
+      );
+      return;
+    }
+
+    const precioVal = Number(editingStand.Precio !== undefined ? editingStand.Precio : editingStand.precio);
+    if (isNaN(precioVal) || precioVal < 0) {
+      setStandModalError(
+        lang === 'de'
+          ? 'Der Preis muss eine gültige Zahl größer oder gleich 0 sein'
+          : 'El precio debe ser un número válido mayor o igual a 0'
+      );
       return;
     }
 
     setSavingStand(true);
     try {
       const standToSave: Partial<Stand> = {
-        ...editingStand,
-        gestion: editingStand.gestion || adminData?.configuracion?.GESTION_ACTIVA,
+        StandID: standId || undefined,
+        Numero: standNum,
+        Nombre: editingStand.Nombre || editingStand.nombre || `Stand ${standNum}`,
+        Categoria: (editingStand.Categoria || editingStand.categoria || 'Comida') as CategoriaStand,
+        Precio: precioVal,
+        Estado: editingStand.Estado || editingStand.estado || 'disponible',
+        PosicionX: Number(editingStand.PosicionX ?? editingStand.posicion_x ?? 0),
+        PosicionY: Number(editingStand.PosicionY ?? editingStand.posicion_y ?? 0),
+        Ancho: Number(editingStand.Ancho ?? editingStand.ancho ?? 1),
+        Alto: Number(editingStand.Alto ?? editingStand.alto ?? 1),
+        Descripcion: editingStand.Descripcion || editingStand.descripcion || '',
       };
       const res = await backendService.saveStand(token, standToSave);
-      if (!res.ok) throw new Error(res.error || 'Error al guardar stand');
-      showFeedback('Stand guardado con éxito');
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        let errorMsg = res.error || (lang === 'de' ? 'Fehler beim Speichern des Stands' : 'Error al guardar stand en Google Sheets');
+        if (errorMsg.includes('Numero requerido')) {
+          errorMsg = lang === 'de'
+            ? 'Das Feld Standnummer ist erforderlich'
+            : 'El número de stand es requerido por Google Apps Script';
+        }
+        throw new Error(errorMsg);
+      }
+      showFeedback(lang === 'de' ? 'Stand erfolgreich in Google Sheets gespeichert' : 'Stand guardado con éxito en Google Sheets', 'success');
       setStandModalOpen(false);
-      loadAdminData(token, true);
+      setStandModalError(null);
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al guardar stand', 'error');
+      const msg = err.message || (lang === 'de' ? 'Fehler beim Speichern des Stands' : 'Error al guardar stand');
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      setStandModalError(msg);
+      showFeedback(msg, 'error');
     } finally {
       setSavingStand(false);
     }
@@ -262,18 +339,32 @@ export const AdminView: React.FC<Props> = ({
 
   const handleConfirmRental = async (solicitud: Solicitud) => {
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
     const confirmMsg = t.confirmRentalPrompt.replace('{name}', solicitud.nombre);
     if (!window.confirm(confirmMsg)) return;
 
     setActionInProgress(solicitud.id);
     try {
       const res = await backendService.confirmarAlquiler(token, solicitud.id);
-      if (!res.ok) throw new Error(res.error || 'Error al confirmar alquiler');
-      showFeedback('Alquiler confirmado con éxito');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || 'Error al confirmar alquiler en Google Sheets');
+      }
+      showFeedback('Alquiler confirmado con éxito en Google Sheets', 'success');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al confirmar alquiler', 'error');
+      const msg = err.message || 'Error al confirmar alquiler';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -281,17 +372,31 @@ export const AdminView: React.FC<Props> = ({
 
   const handleRejectRequest = async (solicitudId: string) => {
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
     if (!window.confirm(t.rejectRequestPrompt)) return;
 
     setActionInProgress(solicitudId);
     try {
       const res = await backendService.rechazarSolicitud(token, solicitudId);
-      if (!res.ok) throw new Error(res.error || 'Error al rechazar solicitud');
-      showFeedback('Solicitud rechazada');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || 'Error al rechazar solicitud en Google Sheets');
+      }
+      showFeedback('Solicitud rechazada con éxito en Google Sheets', 'success');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al rechazar solicitud', 'error');
+      const msg = err.message || 'Error al rechazar solicitud';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -299,17 +404,31 @@ export const AdminView: React.FC<Props> = ({
 
   const handleCancelRental = async (alquilerId: string) => {
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
     if (!window.confirm(t.cancelRentalPrompt)) return;
 
     setActionInProgress(alquilerId);
     try {
       const res = await backendService.cancelarAlquiler(token, alquilerId);
-      if (!res.ok) throw new Error(res.error || 'Error al cancelar alquiler');
-      showFeedback('Alquiler cancelado');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || 'Error al cancelar alquiler en Google Sheets');
+      }
+      showFeedback('Alquiler cancelado con éxito en Google Sheets', 'success');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al cancelar alquiler', 'error');
+      const msg = err.message || 'Error al cancelar alquiler';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -317,17 +436,31 @@ export const AdminView: React.FC<Props> = ({
 
   const handleRevokeGuest = async (invitadoId: string) => {
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
     if (!window.confirm(t.revokePrompt)) return;
 
     setActionInProgress(invitadoId);
     try {
       const res = await backendService.revocarInvitado(token, invitadoId);
-      if (!res.ok) throw new Error(res.error || 'Error al revocar invitado');
-      showFeedback('Invitación revocada');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || 'Error al revocar invitado en Google Sheets');
+      }
+      showFeedback('Invitación revocada con éxito en Google Sheets', 'success');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al revocar invitado', 'error');
+      const msg = err.message || 'Error al revocar invitado';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -335,19 +468,98 @@ export const AdminView: React.FC<Props> = ({
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUserModalError(null);
+
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired('No hay sesión de administrador activa. Por favor inicia sesión.');
+      return;
+    }
+
+    const usernameClean = newUserForm.usuario.trim();
+    const nombreClean = newUserForm.nombre.trim();
+    const passwordClean = newUserForm.password;
+
+    if (!usernameClean) {
+      setUserModalError(lang === 'de' ? 'Benutzername ist erforderlich' : 'El nombre de usuario es obligatorio');
+      return;
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(usernameClean)) {
+      setUserModalError(
+        lang === 'de'
+          ? 'Der Benutzername darf nur Buchstaben, Zahlen, Punkte, Bindestriche und Unterstriche enthalten'
+          : 'El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos (sin espacios)'
+      );
+      return;
+    }
+    if (!nombreClean) {
+      setUserModalError(lang === 'de' ? 'Vollständiger Name ist erforderlich' : 'El nombre completo es obligatorio');
+      return;
+    }
+    if (!passwordClean) {
+      setUserModalError(lang === 'de' ? 'Passwort ist erforderlich' : 'La contraseña es obligatoria');
+      return;
+    }
+    if (passwordClean.length < 12) {
+      setUserModalError(
+        lang === 'de'
+          ? 'Das Passwort muss mindestens 12 Zeichen lang sein (Sicherheitsanforderung des Servers)'
+          : 'La contraseña debe tener al menos 12 caracteres (requisito de seguridad del servidor)'
+      );
+      return;
+    }
+
+    // Check if user already exists locally in loaded admin users
+    const userAlreadyExists = adminData?.usuarios?.some(
+      (u) => u.usuario.trim().toLowerCase() === usernameClean.toLowerCase()
+    );
+    if (userAlreadyExists) {
+      setUserModalError(
+        lang === 'de'
+          ? `Der Benutzer "${usernameClean}" existiert bereits im System`
+          : `El usuario "${usernameClean}" ya existe en el sistema`
+      );
+      return;
+    }
+
+    const rolUpper = newUserForm.rol.toUpperCase() === 'PORTERO' ? 'PORTERO' : 'ADMIN';
 
     setSavingUser(true);
     try {
-      const res = await backendService.crearUsuario(token, newUserForm);
-      if (!res.ok) throw new Error(res.error || 'Error al crear usuario');
-      showFeedback('Usuario creado con éxito');
+      const res = await backendService.crearUsuario(token, {
+        usuario: usernameClean,
+        nombre: nombreClean,
+        password: passwordClean,
+        rol: rolUpper,
+      });
+
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        let errorMsg = res.error || (lang === 'de' ? 'Fehler beim Erstellen des Benutzers' : 'Error al crear usuario en Google Sheets');
+        if (errorMsg.includes('duplicado') || errorMsg.includes('invalido')) {
+          errorMsg = lang === 'de'
+            ? `Der Benutzer "${usernameClean}" existiert bereits in Google Sheets oder hat ein ungültiges Format`
+            : `El usuario "${usernameClean}" ya existe en Google Sheets o contiene caracteres no permitidos`;
+        }
+        throw new Error(errorMsg);
+      }
+
+      showFeedback(lang === 'de' ? 'Benutzer erfolgreich in Google Sheets erstellt' : 'Usuario creado con éxito en Google Sheets', 'success');
       setUserModalOpen(false);
-      setNewUserForm({ usuario: '', nombre: '', password: '', rol: 'admin' });
-      loadAdminData(token, true);
+      setUserModalError(null);
+      setNewUserForm({ usuario: '', nombre: '', password: '', rol: 'ADMIN' });
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al crear usuario', 'error');
+      const msg = err.message || (lang === 'de' ? 'Fehler beim Erstellen des Benutzers' : 'Error al crear usuario');
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      setUserModalError(msg);
+      showFeedback(msg, 'error');
     } finally {
       setSavingUser(false);
     }
@@ -355,22 +567,56 @@ export const AdminView: React.FC<Props> = ({
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordModalError(null);
+
     const token = getActiveToken();
-    if (!token || !targetUserToChangePass || !newPasswordValue.trim()) return;
+    if (!token) {
+      handleSessionExpired('No hay sesión de administrador activa. Por favor inicia sesión.');
+      return;
+    }
+
+    const targetUserId = targetUserIdToChangePass || targetUserToChangePass;
+    if (!targetUserId) {
+      setPasswordModalError('Usuario no especificado');
+      return;
+    }
+
+    if (!newPasswordValue || newPasswordValue.length < 12) {
+      setPasswordModalError(
+        lang === 'de'
+          ? 'Das Passwort muss mindestens 12 Zeichen lang sein (Serveranforderung)'
+          : 'La nueva contraseña debe tener al menos 12 caracteres (requisito de seguridad del servidor)'
+      );
+      return;
+    }
 
     setSavingPassword(true);
     try {
       const res = await backendService.cambiarPassword(
         token,
-        targetUserToChangePass,
-        newPasswordValue.trim()
+        targetUserId,
+        newPasswordValue
       );
-      if (!res.ok) throw new Error(res.error || 'Error al cambiar contraseña');
-      showFeedback('Contraseña actualizada con éxito');
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || (lang === 'de' ? 'Fehler beim Ändern des Passworts' : 'Error al cambiar contraseña en Google Sheets'));
+      }
+      showFeedback(lang === 'de' ? 'Passwort erfolgreich in Google Sheets geändert' : 'Contraseña actualizada con éxito en Google Sheets', 'success');
       setPasswordModalOpen(false);
+      setPasswordModalError(null);
       setNewPasswordValue('');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al cambiar contraseña', 'error');
+      const msg = err.message || (lang === 'de' ? 'Fehler beim Ändern des Passworts' : 'Error al cambiar contraseña');
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      setPasswordModalError(msg);
+      showFeedback(msg, 'error');
     } finally {
       setSavingPassword(false);
     }
@@ -378,21 +624,43 @@ export const AdminView: React.FC<Props> = ({
 
   const handleToggleUserStatus = async (user: Usuario) => {
     const token = getActiveToken();
-    if (!token) return;
-    const newStatus = user.estado === 'activo' ? 'inactivo' : 'activo';
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
 
-    setActionInProgress(user.usuario);
+    const userId = user.UsuarioID || user.id || (user as any).ID || user.usuario;
+    const isActivo = user.Activo === 'SI' || user.activo === 'SI' || user.estado === 'activo' || (user.activo as any) === true;
+    const nextActivo: 'SI' | 'NO' = isActivo ? 'NO' : 'SI';
+
+    setActionInProgress(userId);
     try {
       const res = await backendService.cambiarEstadoUsuario(
         token,
-        user.usuario,
-        newStatus
+        userId,
+        nextActivo
       );
-      if (!res.ok) throw new Error(res.error || 'Error al cambiar estado');
-      showFeedback('Estado de usuario modificado');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || 'Error al cambiar estado de usuario en Google Sheets');
+      }
+      showFeedback(
+        lang === 'de'
+          ? `Benutzerstatus geändert auf ${nextActivo === 'SI' ? 'Aktiv' : 'Inaktiv'}`
+          : `Estado de usuario modificado a ${nextActivo === 'SI' ? 'Activo' : 'Inactivo'} en Google Sheets`,
+        'success'
+      );
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al cambiar estado', 'error');
+      const msg = err.message || 'Error al cambiar estado';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -400,19 +668,50 @@ export const AdminView: React.FC<Props> = ({
 
   const handleCreateEdition = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEditionModalError(null);
+
     const token = getActiveToken();
-    if (!token || !newEditionForm.nombre.trim()) return;
+    if (!token) {
+      handleSessionExpired('No hay sesión de administrador activa. Por favor inicia sesión.');
+      return;
+    }
+
+    const anioVal = Number(newEditionForm.anio);
+    if (!anioVal || isNaN(anioVal) || anioVal < 2026 || anioVal > 2100) {
+      setEditionModalError(
+        lang === 'de'
+          ? 'Das Jahr muss eine Zahl zwischen 2026 und 2100 sein'
+          : 'El año debe ser un número numérico entre 2026 y 2100'
+      );
+      return;
+    }
 
     setSavingEdition(true);
     try {
-      const res = await backendService.nuevaGestion(token, newEditionForm);
-      if (!res.ok) throw new Error(res.error || 'Error al crear gestión');
-      showFeedback('Nueva gestión creada');
+      const res = await backendService.nuevaGestion(token, {
+        anio: anioVal,
+        copiarStands: newEditionForm.copiarStands,
+      });
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || (lang === 'de' ? 'Fehler beim Erstellen der Ausgabe' : 'Error al crear gestión en Google Sheets'));
+      }
+      showFeedback(lang === 'de' ? 'Neue Ausgabe erfolgreich erstellt' : `Gestión ${anioVal} creada con éxito en Google Sheets`, 'success');
       setEditionModalOpen(false);
-      setNewEditionForm({ nombre: '', copiarStands: true });
-      loadAdminData(token, true);
+      setEditionModalError(null);
+      setNewEditionForm({ anio: anioVal + 1, copiarStands: true });
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al crear gestión', 'error');
+      const msg = err.message || (lang === 'de' ? 'Fehler beim Erstellen der Ausgabe' : 'Error al crear gestión');
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      setEditionModalError(msg);
+      showFeedback(msg, 'error');
     } finally {
       setSavingEdition(false);
     }
@@ -420,19 +719,33 @@ export const AdminView: React.FC<Props> = ({
 
   const handleActivateEdition = async (gestion: Gestion) => {
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
     const msg = t.activatePrompt.replace('{name}', gestion.nombre);
     if (!window.confirm(msg)) return;
 
-    const gestionIdentifier = gestion.id || gestion.nombre;
-    setActionInProgress(gestionIdentifier);
+    const gestionId = gestion.GestionID || gestion.id || gestion.nombre;
+    setActionInProgress(gestionId);
     try {
-      const res = await backendService.activarGestion(token, gestionIdentifier);
-      if (!res.ok) throw new Error(res.error || 'Error al activar gestión');
-      showFeedback('Gestión activada con éxito');
-      loadAdminData(token, true);
+      const res = await backendService.activarGestion(token, gestionId);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || (lang === 'de' ? 'Fehler beim Aktivieren der Ausgabe' : 'Error al activar gestión en Google Sheets'));
+      }
+      showFeedback(lang === 'de' ? `Ausgabe ${gestion.nombre} erfolgreich aktiviert` : `Gestión ${gestion.nombre} activada con éxito en Google Sheets`, 'success');
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al activar gestión', 'error');
+      const msg = err.message || 'Error al activar gestión';
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      showFeedback(msg, 'error');
     } finally {
       setActionInProgress(null);
     }
@@ -440,17 +753,44 @@ export const AdminView: React.FC<Props> = ({
 
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
+    setConfigError(null);
+
     const token = getActiveToken();
-    if (!token) return;
+    if (!token) {
+      handleSessionExpired('No hay sesión de administrador activa. Por favor inicia sesión.');
+      return;
+    }
+
+    if (!configForm.NOMBRE_EVENTO?.trim()) {
+      setConfigError(lang === 'de' ? 'Der Veranstaltungsname ist erforderlich' : 'El nombre del evento es obligatorio');
+      return;
+    }
+    if (!configForm.WHATSAPP_ADMIN?.trim()) {
+      setConfigError(lang === 'de' ? 'Die WhatsApp-Nummer des Administrators ist erforderlich' : 'El número de WhatsApp del administrador es obligatorio');
+      return;
+    }
 
     setSavingConfig(true);
     try {
       const res = await backendService.setConfig(token, configForm);
-      if (!res.ok) throw new Error(res.error || 'Error al guardar configuración');
-      showFeedback('Configuración guardada con éxito');
-      loadAdminData(token, true);
+      if (!res.ok) {
+        if (res.error && (res.error.includes('expirada') || res.error.includes('Sesion'))) {
+          handleSessionExpired(res.error);
+          return;
+        }
+        throw new Error(res.error || (lang === 'de' ? 'Fehler beim Speichern der Einstellungen' : 'Error al guardar configuración en Google Sheets'));
+      }
+      showFeedback(lang === 'de' ? 'Einstellungen erfolgreich in Google Sheets gespeichert' : 'Configuración guardada con éxito en Google Sheets', 'success');
+      setConfigError(null);
+      await loadAdminData(token, true);
     } catch (err: any) {
-      showFeedback(err.message || 'Error al guardar configuración', 'error');
+      const msg = err.message || (lang === 'de' ? 'Fehler beim Speichern der Einstellungen' : 'Error al guardar configuración');
+      if (msg.includes('expirada') || msg.includes('Sesion') || msg.includes('no autorizada')) {
+        handleSessionExpired(msg);
+        return;
+      }
+      setConfigError(msg);
+      showFeedback(msg, 'error');
     } finally {
       setSavingConfig(false);
     }
@@ -600,21 +940,37 @@ export const AdminView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Action Notification Toast */}
+      {/* Global Floating Action Notification Toast (always visible above all modals) */}
       {actionMessage && (
-        <div
-          className={`p-3.5 mb-6 rounded-xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
-            actionMessage.type === 'success'
-              ? 'bg-green-50 border-green-200 text-green-800'
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}
-        >
-          {actionMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-red-600" />
-          )}
-          <span>{actionMessage.text}</span>
+        <div className="fixed top-5 right-5 z-[99999] max-w-sm sm:max-w-md w-full px-4 sm:px-0 pointer-events-auto">
+          <div
+            className={`p-4 rounded-xl border text-xs font-semibold flex items-start gap-3 shadow-2xl transition-all transform animate-in slide-in-from-top-4 duration-200 ${
+              actionMessage.type === 'success'
+                ? 'bg-green-50 border-green-300 text-green-900 shadow-green-950/10'
+                : 'bg-red-50 border-red-300 text-red-900 shadow-red-950/10'
+            }`}
+          >
+            {actionMessage.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 pr-2">
+              <p className="font-bold text-xs">
+                {actionMessage.type === 'success' ? 'Operación Exitosa' : 'Aviso del Sistema'}
+              </p>
+              <p className="mt-0.5 text-[11px] font-medium leading-relaxed opacity-95">
+                {actionMessage.text}
+              </p>
+            </div>
+            <button
+              onClick={() => setActionMessage(null)}
+              className="text-gray-400 hover:text-gray-700 p-1 rounded-md transition"
+              title="Cerrar notificación"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -735,8 +1091,10 @@ export const AdminView: React.FC<Props> = ({
             <h3 className="text-base font-bold text-gray-900">{t.tabStands}</h3>
             <button
               onClick={() => {
+                setStandModalError(null);
                 setEditingStand({
                   numero: '',
+                  nombre: '',
                   categoria: 'Comida',
                   precio: '100',
                   estado: 'disponible',
@@ -789,6 +1147,7 @@ export const AdminView: React.FC<Props> = ({
                       <td className="p-3 text-right">
                         <button
                           onClick={() => {
+                            setStandModalError(null);
                             setEditingStand(stand);
                             setStandModalOpen(true);
                           }}
@@ -1096,7 +1455,11 @@ export const AdminView: React.FC<Props> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-gray-900">{t.tabUsers}</h3>
             <button
-              onClick={() => setUserModalOpen(true)}
+              onClick={() => {
+                setUserModalError(null);
+                setNewUserForm({ usuario: '', nombre: '', password: '', rol: 'admin' });
+                setUserModalOpen(true);
+              }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 shadow-xs"
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -1137,7 +1500,10 @@ export const AdminView: React.FC<Props> = ({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => {
+                              setPasswordModalError(null);
+                              setNewPasswordValue('');
                               setTargetUserToChangePass(u.usuario);
+                              setTargetUserIdToChangePass(u.UsuarioID || u.id || (u as any).ID || u.usuario);
                               setPasswordModalOpen(true);
                             }}
                             className="p-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition shadow-xs"
@@ -1147,11 +1513,11 @@ export const AdminView: React.FC<Props> = ({
                           </button>
                           <button
                             onClick={() => handleToggleUserStatus(u)}
-                            disabled={actionInProgress === u.usuario}
+                            disabled={actionInProgress === (u.UsuarioID || u.id || u.usuario)}
                             className="p-1.5 rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50 text-gray-700 border border-gray-200 transition shadow-xs"
                             title={t.toggleStatus}
                           >
-                            {actionInProgress === u.usuario ? (
+                            {actionInProgress === (u.UsuarioID || u.id || u.usuario) ? (
                               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                               <Sliders className="w-3.5 h-3.5" />
@@ -1174,7 +1540,11 @@ export const AdminView: React.FC<Props> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-gray-900">{t.editionsTitle}</h3>
             <button
-              onClick={() => setEditionModalOpen(true)}
+              onClick={() => {
+                setEditionModalError(null);
+                setNewEditionForm({ anio: 2027, copiarStands: true });
+                setEditionModalOpen(true);
+              }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs transition active:scale-95 shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -1229,6 +1599,16 @@ export const AdminView: React.FC<Props> = ({
           <h3 className="text-base font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
             {t.eventSettingsTitle}
           </h3>
+
+          {configError && (
+            <div className="p-3 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="font-bold block">Error al guardar:</span>
+                <span className="font-normal">{configError}</span>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSaveConfig} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1351,6 +1731,16 @@ export const AdminView: React.FC<Props> = ({
               </button>
             </div>
 
+            {standModalError && (
+              <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold block">Error al guardar stand:</span>
+                  <span className="font-normal">{standModalError}</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSaveStand} className="mt-4 space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -1364,6 +1754,21 @@ export const AdminView: React.FC<Props> = ({
                     setEditingStand({ ...editingStand, numero: e.target.value })
                   }
                   className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {lang === 'de' ? 'Standname' : 'Nombre del Stand'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={`Stand ${editingStand.numero || ''}`}
+                  value={editingStand.nombre || ''}
+                  onChange={(e) =>
+                    setEditingStand({ ...editingStand, nombre: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
 
@@ -1482,6 +1887,16 @@ export const AdminView: React.FC<Props> = ({
               </button>
             </div>
 
+            {userModalError && (
+              <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold block">Error al crear usuario:</span>
+                  <span className="font-normal">{userModalError}</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleCreateUser} className="mt-4 space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -1515,11 +1930,13 @@ export const AdminView: React.FC<Props> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t.password} *
+                  {t.password} * <span className="text-gray-500 font-normal">({lang === 'de' ? 'mind. 12 Zeichen' : 'mínimo 12 caracteres'})</span>
                 </label>
                 <input
                   type="password"
                   required
+                  minLength={12}
+                  placeholder="••••••••••••"
                   value={newUserForm.password}
                   onChange={(e) =>
                     setNewUserForm({ ...newUserForm, password: e.target.value })
@@ -1537,8 +1954,8 @@ export const AdminView: React.FC<Props> = ({
                   onChange={(e) => setNewUserForm({ ...newUserForm, rol: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 >
-                  <option value="admin">{t.roleAdmin}</option>
-                  <option value="portero">{t.roleGate}</option>
+                  <option value="ADMIN">{t.roleAdmin} (ADMIN)</option>
+                  <option value="PORTERO">{t.roleGate} (PORTERO)</option>
                 </select>
               </div>
 
@@ -1557,7 +1974,7 @@ export const AdminView: React.FC<Props> = ({
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
                   {savingUser && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{t.create}</span>
+                  <span>{savingUser ? (lang === 'de' ? 'Wird erstellt...' : 'Creando...') : t.create}</span>
                 </button>
               </div>
             </form>
@@ -1581,17 +1998,28 @@ export const AdminView: React.FC<Props> = ({
               </button>
             </div>
 
+            {passwordModalError && (
+              <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold block">Error al cambiar contraseña:</span>
+                  <span className="font-normal">{passwordModalError}</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t.newPassword} *
+                  {t.newPassword} * <span className="text-gray-500 font-normal">({lang === 'de' ? 'mind. 12 Zeichen' : 'mínimo 12 caracteres'})</span>
                 </label>
                 <input
                   type="password"
                   required
+                  minLength={12}
                   value={newPasswordValue}
                   onChange={(e) => setNewPasswordValue(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700"
                 />
               </div>
@@ -1611,7 +2039,7 @@ export const AdminView: React.FC<Props> = ({
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
                   {savingPassword && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{t.save}</span>
+                  <span>{savingPassword ? (lang === 'de' ? 'Wird gespeichert...' : 'Guardando...') : t.save}</span>
                 </button>
               </div>
             </form>
@@ -1633,18 +2061,29 @@ export const AdminView: React.FC<Props> = ({
               </button>
             </div>
 
+            {editionModalError && (
+              <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold block">Error al crear gestión:</span>
+                  <span className="font-normal">{editionModalError}</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleCreateEdition} className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  {t.editionName} *
+                  {lang === 'de' ? 'Jahr der Ausgabe (2026 - 2100)' : 'Año de la gestión (2026 - 2100)'} *
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  min={2026}
+                  max={2100}
                   required
-                  placeholder="GES-2027"
-                  value={newEditionForm.nombre}
+                  value={newEditionForm.anio}
                   onChange={(e) =>
-                    setNewEditionForm({ ...newEditionForm, nombre: e.target.value })
+                    setNewEditionForm({ ...newEditionForm, anio: Number(e.target.value) || 2026 })
                   }
                   className="w-full px-3 py-2 rounded-lg bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-700 font-mono"
                 />
@@ -1680,7 +2119,7 @@ export const AdminView: React.FC<Props> = ({
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition"
                 >
                   {savingEdition && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{t.create}</span>
+                  <span>{savingEdition ? (lang === 'de' ? 'Wird erstellt...' : 'Creando...') : t.create}</span>
                 </button>
               </div>
             </form>

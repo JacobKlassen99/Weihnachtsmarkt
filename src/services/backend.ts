@@ -57,74 +57,55 @@ class BackendService {
   }
 
   /**
-   * Helper to execute a POST request to Google Apps Script.
-   * Tries the local proxy / Netlify function first (avoiding CORS and redirect issues),
-   * and falls back to direct Google Apps Script request if proxy is not reachable.
+   * Helper to execute a POST request to Google Apps Script via the backend proxy (/api/backend).
+   * Does NOT use silent fallbacks or mode: 'no-cors' so that errors are transparent.
    */
   private async postRequest<T>(payload: Record<string, unknown>): Promise<T> {
     const bodyStr = JSON.stringify(payload);
 
-    // 1. Try via proxy (/api/backend or Netlify function)
+    let proxyResponse: Response;
     try {
-      const proxyResponse = await fetch(PROXY_URL, {
+      proxyResponse = await fetch(PROXY_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: bodyStr,
       });
-
-      if (proxyResponse.ok) {
-        const text = await proxyResponse.text();
-        try {
-          const parsed = JSON.parse(text);
-          return parsed as T;
-        } catch {
-          // If not valid JSON, check for HTML error
-          if (text.includes('<title>') || text.includes('<!DOCTYPE')) {
-            const match = text.match(/<title>(.*?)<\/title>/i);
-            throw new Error(`El servidor respondió con HTML (${match ? match[1] : 'Error'}).`);
-          }
-        }
-      }
-    } catch {
-      // If proxy fetch failed (e.g. 404 or network issue), fall through to direct fetch
+    } catch (networkErr: any) {
+      throw new Error(
+        `Error de red al conectar con ${PROXY_URL}: ${networkErr.message || 'Sin conexión'}`
+      );
     }
 
-    // 2. Direct fetch to Google Apps Script as fallback
-    try {
-      const response = await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: bodyStr,
-        redirect: 'follow',
-      });
+    const text = await proxyResponse.text();
 
-      if (!response.ok) {
-        throw new Error(
-          `Error en el servidor (${response.status}: ${response.statusText || 'Sin respuesta'})`
-        );
-      }
-
-      const text = await response.text();
-      let data: any;
+    if (!proxyResponse.ok) {
+      let errorMsg = `Error HTTP ${proxyResponse.status} en ${PROXY_URL}`;
       try {
-        data = JSON.parse(text);
+        const errJson = JSON.parse(text);
+        if (errJson.error) errorMsg = errJson.error;
       } catch {
         if (text.includes('<title>') || text.includes('<!DOCTYPE') || text.includes('<html')) {
           const match = text.match(/<title>(.*?)<\/title>/i);
-          const pageTitle = match ? match[1].trim() : 'Página HTML';
-          throw new Error(`El servidor respondió con HTML en lugar de JSON (${pageTitle}).`);
+          errorMsg = `El servidor devolvió una página HTML en lugar de JSON (${match ? match[1].trim() : 'Error'}). Verifica que la función /api/backend esté desplegada en Netlify.`;
         }
-        throw new Error(`Respuesta no válida del servidor: ${text.slice(0, 100)}`);
       }
+      throw new Error(errorMsg);
+    }
 
-      return data as T;
-    } catch (err: any) {
-      console.error(`Error en acción ${payload.action}:`, err);
-      throw err;
+    try {
+      const parsed = JSON.parse(text);
+      return parsed as T;
+    } catch {
+      if (text.includes('<title>') || text.includes('<!DOCTYPE') || text.includes('<html')) {
+        const match = text.match(/<title>(.*?)<\/title>/i);
+        const pageTitle = match ? match[1].trim() : 'Página HTML';
+        throw new Error(
+          `El servidor respondió con HTML en lugar de JSON (${pageTitle}). La ruta ${PROXY_URL} fue interceptada por el fallback SPA.`
+        );
+      }
+      throw new Error(`Respuesta no válida del servidor: ${text.slice(0, 100)}`);
     }
   }
 
@@ -136,30 +117,42 @@ class BackendService {
       if (cached) return cached;
     }
 
-    let response: Response | null = null;
-
-    // Try proxy first
+    let response: Response;
     try {
       response = await fetch(`${PROXY_URL}?action=public`, {
         method: 'GET',
       });
-      if (!response.ok) response = null;
-    } catch {
-      response = null;
+    } catch (networkErr: any) {
+      throw new Error(
+        `Error de red al consultar ${PROXY_URL}?action=public: ${networkErr.message || 'Sin conexión'}`
+      );
     }
 
-    // Fallback to direct fetch
-    if (!response) {
-      response = await fetch(`${BACKEND_URL}?action=public`, {
-        method: 'GET',
-      });
-    }
+    const text = await response.text();
 
     if (!response.ok) {
-      throw new Error(`Error al cargar datos públicos (${response.status})`);
+      if (text.includes('<title>') || text.includes('<!DOCTYPE') || text.includes('<html')) {
+        const match = text.match(/<title>(.*?)<\/title>/i);
+        throw new Error(
+          `El servidor devolvió HTML (${match ? match[1].trim() : 'Página HTML'}). Verifica la ruta ${PROXY_URL} en Netlify.`
+        );
+      }
+      throw new Error(`Error en el servidor (${response.status}: ${response.statusText || 'Sin respuesta'})`);
     }
 
-    const result = await response.json();
+    let result: any;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      if (text.includes('<title>') || text.includes('<!DOCTYPE') || text.includes('<html')) {
+        const match = text.match(/<title>(.*?)<\/title>/i);
+        throw new Error(
+          `El servidor respondió con HTML en lugar de JSON (${match ? match[1].trim() : 'Página HTML'}). Verifica el proxy ${PROXY_URL}.`
+        );
+      }
+      throw new Error(`Respuesta no válida del servidor: ${text.slice(0, 100)}`);
+    }
+
     if (!result.ok) {
       throw new Error(result.error || 'No se pudieron cargar los datos del evento');
     }
@@ -289,16 +282,52 @@ class BackendService {
     });
 
     // Normalize so data.token, data.rol and flat token/rol are both available
-    if (res.data) {
-      if (!res.token && res.data.token) {
-        res.token = res.data.token;
-      }
-      if (!res.rol && res.data.rol) {
-        res.rol = res.data.rol;
-      }
-      if (!res.nombre && res.data.nombre) {
-        res.nombre = res.data.nombre;
-      }
+    const rawData = (res.data || {}) as Record<string, any>;
+    const rawRoot = res as Record<string, any>;
+    const extractedToken =
+      rawData.token ||
+      rawRoot.token ||
+      rawData.token_sesion ||
+      rawRoot.token_sesion ||
+      rawData.sessionToken ||
+      rawRoot.sessionToken ||
+      '';
+
+    const extractedRol =
+      rawData.rol ||
+      rawRoot.rol ||
+      (typeof rawRoot.usuario === 'object' && rawRoot.usuario !== null ? rawRoot.usuario.rol : null) ||
+      'admin';
+
+    const extractedUsuario =
+      (typeof rawData.usuario === 'string' ? rawData.usuario : null) ||
+      (typeof rawRoot.usuario === 'string' ? rawRoot.usuario : null) ||
+      (typeof rawRoot.usuario === 'object' && rawRoot.usuario !== null ? rawRoot.usuario.usuario : null) ||
+      usuario;
+
+    const extractedNombre =
+      rawData.nombre ||
+      rawRoot.nombre ||
+      (typeof rawRoot.usuario === 'object' && rawRoot.usuario !== null ? rawRoot.usuario.nombre : null) ||
+      extractedUsuario;
+
+    res.token = extractedToken;
+    res.rol = extractedRol;
+    res.nombre = extractedNombre;
+    res.usuario = extractedUsuario;
+
+    if (!res.data) {
+      res.data = {
+        token: extractedToken,
+        usuario: extractedUsuario,
+        rol: extractedRol,
+        nombre: extractedNombre,
+      };
+    } else {
+      res.data.token = extractedToken;
+      res.data.rol = extractedRol;
+      res.data.nombre = extractedNombre;
+      res.data.usuario = extractedUsuario;
     }
 
     return res;
@@ -336,28 +365,45 @@ class BackendService {
     return adminData;
   }
 
-  // 9. GUARDAR STAND (Crear o editar)
+  // 9. GUARDAR STAND (Crear o editar: saveStand_(p))
   public async saveStand(
     token: string,
     stand: Partial<Stand>
   ): Promise<{ ok: boolean; error?: string }> {
-    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+    const num = stand.Numero !== undefined ? stand.Numero : (stand.numero !== undefined ? stand.numero : '');
+    const numClean = typeof num === 'number' ? num : String(num).trim();
+    const standName = String(stand.Nombre || stand.nombre || `Stand ${numClean}`).trim();
+    const cat = String(stand.Categoria || stand.categoria || 'Comida').trim();
+    const precioNum = Number(stand.Precio !== undefined ? stand.Precio : stand.precio) || 0;
+    const est = String(stand.Estado || stand.estado || 'disponible').trim();
+    const desc = String(stand.Descripcion !== undefined ? stand.Descripcion : (stand.descripcion || '')).trim();
+    const posX = Number(stand.PosicionX !== undefined ? stand.PosicionX : (stand.posicion_x ?? 0)) || 0;
+    const posY = Number(stand.PosicionY !== undefined ? stand.PosicionY : (stand.posicion_y ?? 0)) || 0;
+    const anchoNum = Number(stand.Ancho !== undefined ? stand.Ancho : (stand.ancho ?? 1)) || 1;
+    const altoNum = Number(stand.Alto !== undefined ? stand.Alto : (stand.alto ?? 1)) || 1;
+
+    const payload: Record<string, unknown> = {
       action: 'saveStand',
       token,
-      stand,
-      id: stand.id || stand.numero,
-      id_stand: stand.id || stand.numero,
-      numero: stand.numero,
-      categoria: stand.categoria,
-      precio: stand.precio,
-      estado: stand.estado,
-      descripcion: stand.descripcion || '',
-      posicion_x: stand.posicion_x,
-      posicion_y: stand.posicion_y,
-      ancho: stand.ancho,
-      alto: stand.alto,
-      gestion: stand.gestion,
-    });
+      Numero: numClean,
+      Nombre: standName,
+      Categoria: cat,
+      Precio: precioNum,
+      Estado: est,
+      PosicionX: posX,
+      PosicionY: posY,
+      Ancho: anchoNum,
+      Alto: altoNum,
+      Descripcion: desc,
+    };
+
+    // StandID only when editing an existing stand
+    const standId = stand.StandID || stand.id;
+    if (standId) {
+      payload.StandID = String(standId).trim();
+    }
+
+    const res = await this.postRequest<{ ok: boolean; error?: string }>(payload);
 
     if (res.ok) {
       this.invalidateCache();
@@ -366,7 +412,7 @@ class BackendService {
     return res;
   }
 
-  // 10. CONFIRMAR ALQUILER (Desde solicitud)
+  // 10. CONFIRMAR ALQUILER (confirmarAlquiler: SolicitudID)
   public async confirmarAlquiler(
     token: string,
     solicitudId: string
@@ -374,11 +420,7 @@ class BackendService {
     const res = await this.postRequest<{ ok: boolean; token_cliente?: string; error?: string }>({
       action: 'confirmarAlquiler',
       token,
-      id: solicitudId,
-      id_solicitud: solicitudId,
-      solicitudId: solicitudId,
-      solicitud_id: solicitudId,
-      solicitud: solicitudId,
+      SolicitudID: String(solicitudId).trim(),
     });
 
     if (res.ok) {
@@ -388,7 +430,7 @@ class BackendService {
     return res;
   }
 
-  // 11. RECHAZAR SOLICITUD
+  // 11. RECHAZAR SOLICITUD (rechazarSolicitud: SolicitudID)
   public async rechazarSolicitud(
     token: string,
     solicitudId: string
@@ -396,11 +438,7 @@ class BackendService {
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'rechazarSolicitud',
       token,
-      id: solicitudId,
-      id_solicitud: solicitudId,
-      solicitudId: solicitudId,
-      solicitud_id: solicitudId,
-      solicitud: solicitudId,
+      SolicitudID: String(solicitudId).trim(),
     });
 
     if (res.ok) {
@@ -410,7 +448,7 @@ class BackendService {
     return res;
   }
 
-  // 12. CANCELAR ALQUILER
+  // 12. CANCELAR ALQUILER (cancelarAlquiler: AlquilerID)
   public async cancelarAlquiler(
     token: string,
     alquilerId: string
@@ -418,11 +456,7 @@ class BackendService {
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'cancelarAlquiler',
       token,
-      id: alquilerId,
-      id_alquiler: alquilerId,
-      alquilerId: alquilerId,
-      alquiler_id: alquilerId,
-      alquiler: alquilerId,
+      AlquilerID: String(alquilerId).trim(),
     });
 
     if (res.ok) {
@@ -432,7 +466,7 @@ class BackendService {
     return res;
   }
 
-  // 13. REVOCAR INVITADO
+  // 13. REVOCAR INVITADO (revocarInvitado: InvitadoID)
   public async revocarInvitado(
     token: string,
     invitadoId: string
@@ -440,11 +474,7 @@ class BackendService {
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'revocarInvitado',
       token,
-      id: invitadoId,
-      id_invitado: invitadoId,
-      invitadoId: invitadoId,
-      invitado_id: invitadoId,
-      invitado: invitadoId,
+      InvitadoID: String(invitadoId).trim(),
     });
 
     if (res.ok) {
@@ -454,22 +484,21 @@ class BackendService {
     return res;
   }
 
-  // 14. CREAR USUARIO
+  // 14. CREAR USUARIO (crearUsuario_(p): Usuario, Password >= 12, Rol "ADMIN"|"PORTERO", Nombre)
   public async crearUsuario(
     token: string,
     usuario: { usuario: string; nombre: string; password: string; rol: string }
   ): Promise<{ ok: boolean; error?: string }> {
+    const rolClean = String(usuario.rol || 'ADMIN').trim().toUpperCase();
+    const rol = rolClean === 'PORTERO' ? 'PORTERO' : 'ADMIN';
+
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'crearUsuario',
       token,
-      usuario: usuario.usuario,
-      username: usuario.usuario,
-      user: usuario.usuario,
-      nombre: usuario.nombre,
-      password: usuario.password,
-      pass: usuario.password,
-      rol: usuario.rol,
-      userData: usuario,
+      Usuario: String(usuario.usuario || '').trim(),
+      Password: String(usuario.password || ''),
+      Rol: rol,
+      Nombre: String(usuario.nombre || '').trim(),
     });
 
     if (res.ok) {
@@ -479,43 +508,41 @@ class BackendService {
     return res;
   }
 
-  // 15. CAMBIAR PASSWORD
+  // 15. CAMBIAR PASSWORD (cambiarPassword_(p,admin): UsuarioID, Password >= 12)
   public async cambiarPassword(
     token: string,
-    usuario: string,
+    usuarioId: string,
     nuevaPassword: string
   ): Promise<{ ok: boolean; error?: string }> {
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'cambiarPassword',
       token,
-      usuario,
-      user: usuario,
-      username: usuario,
-      password: nuevaPassword,
-      nuevaPassword,
-      newPassword: nuevaPassword,
-      nueva_password: nuevaPassword,
-      password_nueva: nuevaPassword,
+      UsuarioID: String(usuarioId).trim(),
+      Password: String(nuevaPassword),
     });
 
     return res;
   }
 
-  // 16. CAMBIAR ESTADO USUARIO (activo / inactivo)
+  // 16. CAMBIAR ESTADO USUARIO (cambiarEstadoUsuario_(p): UsuarioID, Activo "SI"|"NO")
   public async cambiarEstadoUsuario(
     token: string,
-    usuario: string,
-    nuevoEstado: 'activo' | 'inactivo'
+    usuarioId: string,
+    activo: 'SI' | 'NO' | boolean | string
   ): Promise<{ ok: boolean; error?: string }> {
+    let activoVal = 'SI';
+    if (typeof activo === 'boolean') {
+      activoVal = activo ? 'SI' : 'NO';
+    } else if (typeof activo === 'string') {
+      const up = activo.trim().toUpperCase();
+      activoVal = up === 'NO' || up === 'INACTIVO' ? 'NO' : 'SI';
+    }
+
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'cambiarEstadoUsuario',
       token,
-      usuario,
-      user: usuario,
-      username: usuario,
-      estado: nuevoEstado,
-      nuevoEstado,
-      nuevo_estado: nuevoEstado,
+      UsuarioID: String(usuarioId).trim(),
+      Activo: activoVal,
     });
 
     if (res.ok) {
@@ -525,55 +552,82 @@ class BackendService {
     return res;
   }
 
-  // 17. GUARDAR CONFIGURACIÓN
-  public async setConfig(
+  // 17. GUARDAR CONFIGURACIÓN (setConfig_(p): Clave y Valor individual por operación)
+  public async setSingleConfig(
     token: string,
-    config: Partial<Configuracion>
+    clave: string,
+    valor: string | number
   ): Promise<{ ok: boolean; error?: string }> {
-    const res = await this.postRequest<{ ok: boolean; error?: string }>({
+    return await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'setConfig',
       token,
-      config,
-      configuracion: config,
-      data: config,
-      NOMBRE_EVENTO: config.NOMBRE_EVENTO,
-      IDIOMA_PREDETERMINADO: config.IDIOMA_PREDETERMINADO,
-      WHATSAPP_ADMIN: config.WHATSAPP_ADMIN,
-      MONEDA: config.MONEDA,
-      MAX_INVITADOS: config.MAX_INVITADOS,
-      GESTION_ACTIVA: config.GESTION_ACTIVA,
-      MENSAJE_WHATSAPP_ES: config.MENSAJE_WHATSAPP_ES,
-      MENSAJE_WHATSAPP_DE: config.MENSAJE_WHATSAPP_DE,
-      nombre_evento: config.NOMBRE_EVENTO,
-      idioma_predeterminado: config.IDIOMA_PREDETERMINADO,
-      whatsapp_admin: config.WHATSAPP_ADMIN,
-      moneda: config.MONEDA,
-      max_invitados: config.MAX_INVITADOS,
-      gestion_activa: config.GESTION_ACTIVA,
-      mensaje_whatsapp_es: config.MENSAJE_WHATSAPP_ES,
-      mensaje_whatsapp_de: config.MENSAJE_WHATSAPP_DE,
+      Clave: String(clave).trim(),
+      Valor: String(valor ?? ''),
     });
-
-    if (res.ok) {
-      this.invalidateCache();
-    }
-
-    return res;
   }
 
-  // 18. NUEVA GESTIÓN ANUAL
+  // Guarda las claves editables modificadas individualmente y reporta fallos
+  public async setConfig(
+    token: string,
+    config: Partial<Configuracion>,
+    previousConfig?: Partial<Configuracion>
+  ): Promise<{ ok: boolean; error?: string; errors?: Record<string, string> }> {
+    const editableKeys = [
+      'NOMBRE_EVENTO',
+      'IDIOMA_PREDETERMINADO',
+      'WHATSAPP_ADMIN',
+      'MONEDA',
+      'MAX_INVITADOS',
+      'MENSAJE_WHATSAPP_ES',
+      'MENSAJE_WHATSAPP_DE',
+    ] as const;
+
+    const failedKeys: Record<string, string> = {};
+
+    for (const key of editableKeys) {
+      const newVal = (config as any)[key];
+      if (newVal === undefined) continue;
+
+      // Si existe configuración previa, omitir claves que no cambiaron
+      if (previousConfig && String(newVal) === String((previousConfig as any)[key])) {
+        continue;
+      }
+
+      try {
+        const res = await this.setSingleConfig(token, key, String(newVal));
+        if (!res.ok) {
+          failedKeys[key] = res.error || `Error al guardar ${key}`;
+        }
+      } catch (err: any) {
+        failedKeys[key] = err.message || `Error de conexión al guardar ${key}`;
+      }
+    }
+
+    this.invalidateCache();
+
+    const failureCount = Object.keys(failedKeys).length;
+    if (failureCount > 0) {
+      return {
+        ok: false,
+        error: `Falló al guardar: ${Object.keys(failedKeys).join(', ')}`,
+        errors: failedKeys,
+      };
+    }
+
+    return { ok: true };
+  }
+
+  // 18. NUEVA GESTIÓN ANUAL (nuevaGestion_(p): Anio: número 2026-2100, CopiarStands: boolean)
   public async nuevaGestion(
     token: string,
-    gestion: { nombre: string; copiarStands: boolean }
+    gestion: { anio: number | string; copiarStands: boolean }
   ): Promise<{ ok: boolean; error?: string }> {
+    const anioNum = Number(gestion.anio);
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'nuevaGestion',
       token,
-      nombre: gestion.nombre,
-      gestion: gestion.nombre,
-      id_gestion: gestion.nombre,
-      copiarStands: gestion.copiarStands,
-      copiar_stands: gestion.copiarStands,
+      Anio: anioNum,
+      CopiarStands: Boolean(gestion.copiarStands),
     });
 
     if (res.ok) {
@@ -583,18 +637,16 @@ class BackendService {
     return res;
   }
 
-  // 19. ACTIVAR GESTIÓN
+  // 19. ACTIVAR GESTIÓN (activarGestion_(id): GestionID)
   public async activarGestion(
     token: string,
-    idGestion: string
+    gestionId: string
   ): Promise<{ ok: boolean; error?: string }> {
+    const cleanId = String(gestionId || '').trim();
     const res = await this.postRequest<{ ok: boolean; error?: string }>({
       action: 'activarGestion',
       token,
-      id: idGestion,
-      id_gestion: idGestion,
-      gestion: idGestion,
-      nombre: idGestion,
+      GestionID: cleanId,
     });
 
     if (res.ok) {

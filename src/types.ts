@@ -18,15 +18,27 @@ export interface Configuracion {
 
 export interface Stand {
   id?: string;
+  StandID?: string;
   numero: string | number;
+  Numero?: string | number;
+  nombre?: string;
+  Nombre?: string;
   categoria: CategoriaStand;
+  Categoria?: CategoriaStand;
   precio: number | string;
+  Precio?: number | string;
   estado: 'disponible' | 'ocupado' | 'reservado' | string;
+  Estado?: string;
   posicion_x?: number;
+  PosicionX?: number;
   posicion_y?: number;
+  PosicionY?: number;
   ancho?: number;
+  Ancho?: number;
   alto?: number;
+  Alto?: number;
   descripcion?: string;
+  Descripcion?: string;
   cliente_nombre?: string;
   gestion?: string;
 }
@@ -78,15 +90,26 @@ export interface Acceso {
 }
 
 export interface Usuario {
+  id?: string;
+  UsuarioID?: string;
   usuario: string;
+  Usuario?: string;
   nombre: string;
-  rol: 'admin' | 'portero' | string;
+  Nombre?: string;
+  rol: 'admin' | 'portero' | 'ADMIN' | 'PORTERO' | string;
+  Rol?: string;
   estado: 'activo' | 'inactivo' | string;
+  Activo?: 'SI' | 'NO' | boolean | string;
+  activo?: 'SI' | 'NO' | boolean | string;
 }
 
 export interface Gestion {
   id: string;
+  GestionID?: string;
   nombre: string;
+  Nombre?: string;
+  anio?: number;
+  Anio?: number;
   activa: boolean;
   fecha_creacion?: string;
 }

@@ -10,6 +10,30 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
 };
 
+function resolveQueryString(event: HandlerEvent): string {
+  // 1. Try rawQuery if provided
+  if (event.rawQuery && typeof event.rawQuery === 'string' && event.rawQuery.trim().length > 0) {
+    return event.rawQuery;
+  }
+  // 2. Try queryStringParameters (standard Netlify / AWS Lambda)
+  if (event.queryStringParameters && Object.keys(event.queryStringParameters).length > 0) {
+    const params = new URLSearchParams();
+    for (const [key, val] of Object.entries(event.queryStringParameters)) {
+      if (val !== undefined && val !== null) {
+        params.append(key, val);
+      }
+    }
+    const built = params.toString();
+    if (built) return built;
+  }
+  // 3. Try parsing from rawUrl
+  if (event.rawUrl && event.rawUrl.includes('?')) {
+    const queryPart = event.rawUrl.split('?')[1];
+    if (queryPart) return queryPart;
+  }
+  return '';
+}
+
 export const handler: Handler = async (event: HandlerEvent) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -21,14 +45,12 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    let targetUrl = GOOGLE_APPS_SCRIPT_URL;
-
-    // Forward GET requests with query parameters
+    // 1. GET Requests (e.g. ?action=public)
     if (event.httpMethod === 'GET') {
-      const queryString = event.rawQuery || '';
-      if (queryString) {
-        targetUrl += `?${queryString}`;
-      }
+      const queryString = resolveQueryString(event);
+      const targetUrl = queryString
+        ? `${GOOGLE_APPS_SCRIPT_URL}?${queryString}`
+        : GOOGLE_APPS_SCRIPT_URL;
 
       const response = await fetch(targetUrl, {
         method: 'GET',
@@ -43,16 +65,24 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    // Forward POST requests
+    // 2. POST Requests
     if (event.httpMethod === 'POST') {
-      const body = event.body || '{}';
+      let bodyStr = event.body || '{}';
+      // Decode base64 if Netlify encoded the request body
+      if (event.isBase64Encoded && event.body) {
+        try {
+          bodyStr = Buffer.from(event.body, 'base64').toString('utf-8');
+        } catch (decodeErr) {
+          console.error('Error al decodificar cuerpo base64:', decodeErr);
+        }
+      }
 
       const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: typeof body === 'string' ? body : JSON.stringify(body),
+        body: typeof bodyStr === 'string' ? bodyStr : JSON.stringify(bodyStr),
         redirect: 'follow',
       });
 

@@ -42,12 +42,13 @@ function gasProxyPlugin(): Plugin {
             }
 
             if (req.method === 'POST') {
-              let body = '';
+              const chunks: Buffer[] = [];
               req.on('data', (chunk) => {
-                body += chunk;
+                chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
               });
               req.on('end', async () => {
                 try {
+                  const body = Buffer.concat(chunks).toString('utf-8');
                   const gasRes = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
                     headers: {
@@ -129,6 +130,17 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          navigateFallbackDenylist: [/^\/api\//, /^\/\.netlify\//],
+          runtimeCaching: [
+            {
+              urlPattern: /^\/api\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /^\/\.netlify\/.*/i,
+              handler: 'NetworkOnly',
+            },
+          ],
         },
         devOptions: {
           enabled: false,
